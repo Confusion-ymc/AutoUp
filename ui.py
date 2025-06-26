@@ -52,8 +52,8 @@ def main_gui(run_func):
             sg.popup('有问题联系作者：ymc1107238486', title='关于')
         elif event == '开始':
             try:
-                THREAD_COUNT = int(values['-THREAD_COUNT-'])
-                assert 0 < THREAD_COUNT <= 10, '线程数量必须在1-10之间'
+                task_manager.THREAD_COUNT = int(values['-THREAD_COUNT-'])
+                assert 0 < task_manager.THREAD_COUNT <= 10, '线程数量必须在1-10之间'
             except AssertionError as e:
                 sg.popup(e)
                 continue
@@ -64,5 +64,5 @@ def main_gui(run_func):
             window['开始'].update(disabled=True)
             window['-THREAD_COUNT-'].update(disabled=True)
             threading.Thread(target=run_func, daemon=True).start()
-            print(f'任务开始，线程数量：{THREAD_COUNT}')
+            print(f'任务开始，线程数量：{task_manager.THREAD_COUNT}')
     window.close()
