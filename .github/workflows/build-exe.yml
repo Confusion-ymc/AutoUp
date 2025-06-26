@@ -1,13 +1,20 @@
 name: Build EXE
 
 on:
-  # 当创建 tag 时触发
-  push:
-    tags:
-      - 'v*'  # 匹配以 v 开头的 tag，如 v1.0.0
-  # 手动触发
-  workflow_dispatch:
-
+   workflow_dispatch:
+      inputs:
+        tag_name:
+          description: '输入要创建 Release 的 tag 名称（格式如 v1.0.0）'
+          required: true
+          type: string
+        target_file:
+          description: '要打包的 Python 文件路径'
+          required: true
+          type: string
+        build_cmd:
+          description: '打包命令, pyinstaller -w main3.py'
+          required: true
+          type: string
 jobs:
   build:
     runs-on: windows-latest
@@ -34,11 +41,11 @@ jobs:
 
       - name: Build EXE
         run: |
-          pyinstaller -w main3.py
+          ${{ github.event.inputs.build_cmd }}
 
       - name: Compress build folder
         run: |
-          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\main3 -DestinationPath D:\a\AutoUp\AutoUp\dist\main3.zip
+          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\${{ github.event.inputs.target_file }} -DestinationPath D:\a\AutoUp\AutoUp\dist\dist.zip
 
       - name: Create Release
         id: create_release
@@ -46,8 +53,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          tag_name: ${{ github.event.inputs.tag_name}}
+          release_name: Release ${{ github.event.inputs.tag_name }}
           draft: false
           prerelease: false
 
@@ -58,6 +65,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: D:\a\AutoUp\AutoUp\dist\main3.zip
-          asset_name: main3.zip
+          asset_path: D:\a\AutoUp\AutoUp\dist\dist.zip
+          asset_name: dist.zip
           asset_content_type: application/zip
