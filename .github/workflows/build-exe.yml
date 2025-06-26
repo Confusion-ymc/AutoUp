@@ -1,10 +1,10 @@
 name: Build EXE
 
 on:
-  # 推送到主分支时触发
+  # 当创建 tag 时触发
   push:
-    branches:
-      - main
+    tags:
+      - 'v*'  # 匹配以 v 开头的 tag，如 v1.0.0
   # 手动触发
   workflow_dispatch:
 
@@ -29,7 +29,7 @@ jobs:
 
       - name: Install Playwright Chromium
         run: |
-          SET PLAYWRIGHT_BROWSERS_PATH=0
+          $env:PLAYWRIGHT_BROWSERS_PATH="0"
           playwright install chromium
 
       - name: Build EXE
@@ -40,8 +40,24 @@ jobs:
         run: |
           Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\main3 -DestinationPath D:\a\AutoUp\AutoUp\dist\main3.zip
 
-      - name: Upload EXE
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: main-exe-file
-          path: D:\a\AutoUp\AutoUp\dist\main3.zip
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: D:\a\AutoUp\AutoUp\dist\main3.zip
+          asset_name: main3.zip
+          asset_content_type: application/zip
