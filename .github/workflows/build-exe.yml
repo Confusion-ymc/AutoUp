@@ -15,7 +15,10 @@ on:
           description: '打包命令, pyinstaller -w main3.py'
           required: true
           type: string
+
+
 jobs:
+
   build:
     runs-on: windows-latest
     steps:
@@ -45,8 +48,9 @@ jobs:
 
       - name: Compress build folder
         run: |
-          $fileName = "${github.event.inputs.target_file//.py/}"
-          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\$fileName  -DestinationPath D:\a\AutoUp\AutoUp\dist\$fileName.zip
+          $filename = ${{ github.event.inputs.tag_name}} -replace '\.py$', ''
+          echo "modified=$filename" >> $env:GITHUB_ENV
+          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\${{ env.filename }}  -DestinationPath D:\a\AutoUp\AutoUp\dist\${{ env.filename }}.zip
 
       - name: Create Release
         id: create_release
@@ -66,6 +70,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: D:\a\AutoUp\AutoUp\dist\${github.event.inputs.target_file//.py/.zip}
-          asset_name: ${github.event.inputs.target_file//.py/.zip}
+          asset_path: D:\a\AutoUp\AutoUp\dist\${{ env.filename }}.zip
+          asset_name: ${{ env.filename }}.zip
           asset_content_type: application/zip
