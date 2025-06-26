@@ -1,0 +1,2 @@
+class MyRepeatError(Exception):
+    pass
