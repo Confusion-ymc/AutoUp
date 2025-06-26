@@ -53,7 +53,7 @@ def main_gui(run_func):
         elif event == '开始':
             try:
                 task_manager.THREAD_COUNT = int(values['-THREAD_COUNT-'])
-                assert 0 < task_manager.THREAD_COUNT <= 10, '线程数量必须在1-10之间'
+                assert 0 < task_manager.THREAD_COUNT <= 50, '线程数量必须在1-50之间'
             except AssertionError as e:
                 sg.popup(e)
                 continue

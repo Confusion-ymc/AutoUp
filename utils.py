@@ -59,7 +59,6 @@ class Tools:
             os.rename(file_path, dir_path.name + '/' + file_path.name)
         except Exception as e:
             print(f"[警告] 移动文件出错 [{file_path} => {dir_path}] {e}")
-            raise e
 
     @staticmethod
     def unzip_file(file_path: Path, to_dir: Path):
