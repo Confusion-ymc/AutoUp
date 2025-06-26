@@ -25,6 +25,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller playwright
           pip install -r requirements.txt
+          pip install PySimpleGUI-4.60.5-py3-none-any.whl  # 安装本地 whl 文件
 
       - name: Install Playwright Chromium
         run: |
@@ -39,4 +40,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: main-exe-file
-          path: dist/main3.exe
+          path: D:\a\AutoUp\AutoUp\dist\main3.exe
