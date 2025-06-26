@@ -38,7 +38,7 @@ jobs:
 
       - name: Compress build folder
         run: |
-          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\main3 -DestinationPath D:\a\AutoUp\AutoUp\dist\main.zip
+          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\main3 -DestinationPath D:\a\AutoUp\AutoUp\dist\main3.zip
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
