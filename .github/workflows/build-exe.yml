@@ -48,9 +48,9 @@ jobs:
 
       - name: Compress build folder
         run: |
-          $filename = ${{ github.event.inputs.tag_name}} -replace '\.py$', ''
-          echo "modified=$filename" >> $env:GITHUB_ENV
-          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\${{ env.filename }}  -DestinationPath D:\a\AutoUp\AutoUp\dist\${{ env.filename }}.zip
+          $replaced_filename = "${{ github.event.inputs.target_file}}" -replace '\.py$', ''
+          echo "replaced_filename=$replaced_filename" >> $env:GITHUB_ENV
+          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\${{ env.replaced_filename }}  -DestinationPath D:\a\AutoUp\AutoUp\dist\${{ env.replaced_filename }}.zip
 
       - name: Create Release
         id: create_release
@@ -70,6 +70,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: D:\a\AutoUp\AutoUp\dist\${{ env.filename }}.zip
-          asset_name: ${{ env.filename }}.zip
+          asset_path: D:\a\AutoUp\AutoUp\dist\${{ env.replaced_filename }}.zip
+          asset_name: ${{ env.replaced_filename }}.zip
           asset_content_type: application/zip
