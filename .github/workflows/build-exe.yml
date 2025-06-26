@@ -48,9 +48,13 @@ jobs:
 
       - name: Compress build folder
         run: |
-          $replaced_filename = "${{ github.event.inputs.target_file}}" -replace '\.py$', ''
-          echo "replaced_filename=$replaced_filename" >> $env:GITHUB_ENV
-          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\${{ env.replaced_filename }}  -DestinationPath D:\a\AutoUp\AutoUp\dist\${{ env.replaced_filename }}.zip
+          # 获取输入的目标文件名称
+          $targetFile = "${{ github.event.inputs.target_file }}"
+          # 去除 .py 后缀
+          $fileName = $targetFile -replace '\.py$', ''
+          echo "replaced_filename=$fileName" >> $env:GITHUB_ENV
+          # 构建正确的压缩路径
+          Compress-Archive -Path "D:\a\AutoUp\AutoUp\dist\$fileName" -DestinationPath "D:\a\AutoUp\AutoUp\dist\$fileName.zip"
 
       - name: Create Release
         id: create_release
