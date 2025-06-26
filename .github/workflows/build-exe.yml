@@ -44,6 +44,7 @@ jobs:
 
       - name: Compress build folder
         run: |
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
           $targetFile = "${{ env.target_file }}"
           # 去除 .py 后缀
           $fileName = $targetFile -replace '\.py$', ''
