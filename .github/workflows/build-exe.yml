@@ -44,16 +44,16 @@ jobs:
 
       - name: Compress build folder
         run: |
-          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          $OutputEncoding = [System.Text.UTF8Encoding]::UTF8
           $targetFile = "${{ env.target_file }}"
           # 去除 .py 后缀
           $fileName = $targetFile -replace '\.py$', ''
           # 添加文件
           echo "replaced_filename=$fileName" >> $env:GITHUB_ENV
-          Copy-Item -Path "关键词.xls" -Destination "D:\a\AutoUp\AutoUp\dist\$fileName\"
+          Copy-Item -Path "关键词.xls" -Destination "D:\a\AutoUp\AutoUp\dist\$fileName\" -Force
           # 构建正确的压缩路径
-          Compress-Archive -Path "D:\a\AutoUp\AutoUp\dist\$fileName" -DestinationPath "D:\a\AutoUp\AutoUp\dist\$fileName.zip"
-        shell: powershell
+          Compress-Archive -Path "D:\a\AutoUp\AutoUp\dist\$fileName" -DestinationPath "D:\a\AutoUp\AutoUp\dist\$fileName.zip" -Force
+        shell: pwsh
 
       - name: Create Release
         id: create_release
