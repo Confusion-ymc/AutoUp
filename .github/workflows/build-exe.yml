@@ -36,8 +36,12 @@ jobs:
         run: |
           pyinstaller -w main3.py
 
+      - name: Compress build folder
+        run: |
+          Compress-Archive -Path D:\a\AutoUp\AutoUp\dist\main3 -DestinationPath D:\a\AutoUp\AutoUp\dist\main.zip
+
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
           name: main-exe-file
-          path: D:\a\AutoUp\AutoUp\dist\main3.exe
+          path: D:\a\AutoUp\AutoUp\dist\main3.zip
