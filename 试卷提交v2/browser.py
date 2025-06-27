@@ -38,11 +38,11 @@ class Browser:
 
     def login_by_cookie(self):
         # 通过cookies.json登录
-        if not os.path.exists('cookies.json'):
+        if not os.path.exists('../cookies.json'):
             self.main_page.goto(self.login_url)
             return False
         # logger.log('尝试使用cookies.json登录')
-        with open('cookies.json', 'r', encoding='utf-8') as f:
+        with open('../cookies.json', 'r', encoding='utf-8') as f:
             cookies = json.load(f)
         self.context.add_cookies(cookies)
         try:
@@ -71,7 +71,7 @@ class Browser:
             # 获取 cookies
             cookies = self.browser.contexts[0].cookies()
             # 保存 cookies 到文件
-            with open('cookies.json', 'w', encoding='utf-8') as f:
+            with open('../cookies.json', 'w', encoding='utf-8') as f:
                 json.dump(cookies, f)
             self.is_login = True
             return True

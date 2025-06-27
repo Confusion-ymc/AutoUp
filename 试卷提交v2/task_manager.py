@@ -1,6 +1,8 @@
 import queue
 import threading
 import time
+import uuid
+from collections import OrderedDict
 from pathlib import Path
 
 from utils import Tools, LogHandler
@@ -22,6 +24,7 @@ class TaskManager:
         self.FAILED_COUNT = []
         self.REPEAT_COUNT = []
         self.RUNNING_COUNT = []
+        self.TASK_DICT = OrderedDict()
         self.GRADE_MAP = Tools.load_keywords('关键词.xls', 'Sheet1')
         self.CATALOG_MAP = Tools.load_keywords('关键词.xls', 'Sheet2')
         self.CLASS_MAP = [
@@ -49,14 +52,26 @@ class TaskManager:
         self.start_listen()
 
     def start_listen(self):
-        def load_tasks(self):
+        def load_tasks(self: TaskManager):
             while True:
                 if self.LISTEN_DIR:
                     # 检测上传文件是否有变动 有就把文件加入队列
                     for file_path in Tools.list_all_files(self.UPLOAD_DIR):
                         if file_path.name not in self.task_set:
                             self.task_set.add(file_path.name)
-                            self.task_queue.put(file_path)
+                            # 格式: {task_id: {'filename': '', 'status': '', 'thread': '', 'start_time': '', 'end_time': '', 'error': ''}}
+                            task_id = uuid.uuid4().__str__()
+                            self.TASK_DICT[task_id] = {
+                                'file_path': file_path,
+                                'filename': file_path.name,
+                                'status': '',
+                                'thread': '',
+                                'start_time': '',
+                                'end_time': '',
+                                'error': '',
+                                'status_changed': True
+                            }
+                            self.task_queue.put(task_id)
                 time.sleep(2)
 
         threading.Thread(target=load_tasks, daemon=True, args=(self,)).start()

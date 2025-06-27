@@ -1,0 +1,136 @@
+import threading
+import time
+from datetime import datetime
+from typing import OrderedDict
+
+import PySimpleGUI as sg
+from task_manager import task_manager
+
+sg.theme('SystemDefaultForReal')
+
+
+def main_gui(run_func):
+    font = ('微软雅黑', 12)
+    # 上次更新的任务ID集合
+    last_task_ids = set()
+    # 定义表格列
+    headings = ['序号', '文件名', '状态', '执行线程', '开始时间', '结束时间', '耗时(秒)', '错误信息']
+    col_widths = [5, 60, 10, 12, 15, 15, 10, 30]
+
+    # 创建表格数据模型
+    task_data = []
+
+    layout = [
+        [sg.Table(
+            values=task_data,
+            headings=headings,
+            max_col_width=100,
+            auto_size_columns=False,
+            col_widths=col_widths,
+            display_row_numbers=False,
+            justification='center',
+            num_rows=20,
+            key='-TASK_TABLE-',
+            row_height=25,
+            font=font,
+            # enable_click_events=True,
+            tooltip='任务执行情况表',
+            expand_x=True,
+            expand_y=True
+        )],
+        [sg.Text('待执行:'), sg.Text('0', key='-TASK_COUNT-'),
+         sg.Text('运行中:'), sg.Text('0', key='-RUNNING-'),
+         sg.Text('成功数量:'), sg.Text('0', key='-SUCCESS-'),
+         sg.Text('重复数量:'), sg.Text('0', key='-REPEAT-'),
+         sg.Text('失败数量:'), sg.Text('0', key='-FAILED-'),
+         sg.Button('文件夹监听中', key='-listen_dir-', border_width=0),
+         sg.Push(),
+         sg.Text('线程数量:'), sg.InputText(str(task_manager.THREAD_COUNT), key='-THREAD_COUNT-', size=(5, 1)),
+         sg.Button('开始'), sg.Button('退出'), sg.Button('关于')]
+    ]
+
+    def update_result_count():
+        nonlocal last_task_ids
+
+        while True:
+            time.sleep(0.5)
+
+            # 更新统计数据
+            window['-SUCCESS-'].update(len(task_manager.SUCCESS_COUNT))
+            window['-FAILED-'].update(len(task_manager.FAILED_COUNT))
+            window['-REPEAT-'].update(len(task_manager.REPEAT_COUNT))
+            window['-TASK_COUNT-'].update(task_manager.task_queue.qsize())
+            window['-RUNNING-'].update(len(task_manager.RUNNING_COUNT))
+
+            # 获取当前任务ID集合
+            current_task_ids = list(task_manager.TASK_DICT)
+
+            new_tasks = OrderedDict()
+
+            # 找出需要更新的行
+            rows_to_update = {}
+            for row_index, task_id in enumerate(current_task_ids):
+                task_info = task_manager.TASK_DICT[task_id]
+                row_data = [
+                    row_index + 1,
+                    task_info.get('filename', ''),
+                    task_info.get('status', ''),
+                    task_info.get('thread', ''),
+                    task_info.get('start_time').strftime("%H:%M:%S") if task_info.get('start_time') else '',
+                    task_info.get('end_time').strftime("%H:%M:%S") if task_info.get('end_time') else '',
+                    task_info.get('duration', ''),
+                    task_info.get('error', '')
+                ]
+                if task_info.get('status_changed', False):
+                    rows_to_update[row_index] = row_data
+                    # 重置状态变化标志
+                    task_info['status_changed'] = False
+                if row_index >= len(last_task_ids):
+                    new_tasks[row_index] = row_data
+
+            table = window['-TASK_TABLE-'].Widget
+            # 插入新增的行
+            for row_index, row_data in new_tasks.items():
+                table.insert("", 'end', iid=row_index, values=row_data)
+
+            # 更新有变化的行
+            for row_index, row_data in rows_to_update.items():
+                if row_index in new_tasks:
+                    continue
+                children = table.get_children()
+                table.item(children[row_index], values=row_data)
+            last_task_ids = current_task_ids.copy()
+
+
+
+    window = sg.Window('自动上传工具 - 任务监控', layout, resizable=True, finalize=True)
+    window.set_min_size((800, 600))
+    # 启动更新线程
+    threading.Thread(target=update_result_count, daemon=True).start()
+    while True:
+        event, values = window.read()
+        if event in (sg.WINDOW_CLOSED, '退出'):
+            break
+        elif event == '-listen_dir-':
+            task_manager.LISTEN_DIR = not task_manager.LISTEN_DIR
+            window['-listen_dir-'].update(
+                text='文件夹监听中' if task_manager.LISTEN_DIR else '文件夹未监听')
+        elif event == '关于':
+            sg.popup('有问题联系作者：ymc1107238486', title='关于')
+        elif event == '开始':
+            try:
+                task_manager.THREAD_COUNT = int(values['-THREAD_COUNT-'])
+                assert 0 < task_manager.THREAD_COUNT <= 50, '线程数量必须在1-50之间'
+            except AssertionError as e:
+                sg.popup(e)
+                continue
+            except:
+                sg.popup('线程数量必须为整数')
+                continue
+
+            window['开始'].update(disabled=True)
+            window['-THREAD_COUNT-'].update(disabled=True)
+            threading.Thread(target=run_func, daemon=True).start()
+            print(f'任务开始，线程数量：{task_manager.THREAD_COUNT}')
+
+    window.close()

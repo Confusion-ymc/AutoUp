@@ -2,3 +2,15 @@
 .idea
 .pyc
 /__pycache__
+*.zip
+*.pdf
+*.mp3
+*.mp4
+*.jpg
+*.png
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.ppt
+cookies.json
