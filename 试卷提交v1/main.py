@@ -54,7 +54,8 @@ class FileParse:
     def get_grade(self):
         safe_name = self.file_path.name
         for city_name in ['上海', '上饶', '上杭', '上虞', '上高', '上犹', "上林", "上蔡", "上街", "上党", "上甘岭",
-                    "下关", "下蔡", "下溪", "下川" "下邳", "下花园", "下陆区", "下城区", "下蜀镇", "下仓镇", "下沙"]:
+                          "下关", "下蔡", "下溪", "下川" "下邳", "下花园", "下陆区", "下城区", "下蜀镇", "下仓镇",
+                          "下沙"]:
             safe_name = safe_name.replace(city_name, '')
 
         if '上' in safe_name:
@@ -350,6 +351,7 @@ def read_grade_mapping_from_excel(file_path, sheet_name=0):
     except Exception as e:
         print(f"读取Excel文件出错: {e}")
         raise e
+
 
 def read_class_mapping_from_excel(file_path, sheet_name=0):
     try:
