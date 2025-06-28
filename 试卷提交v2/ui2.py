@@ -1,10 +1,10 @@
 import threading
 import time
-from datetime import datetime
 from typing import OrderedDict
 
 import PySimpleGUI as sg
 from task_manager import task_manager
+import tkinter as tk
 
 sg.theme('SystemDefaultForReal')
 
@@ -34,7 +34,7 @@ def main_gui(run_func):
             row_height=25,
             font=font,
             # enable_click_events=True,
-            tooltip='任务执行情况表',
+            # tooltip='任务执行情况表',
             expand_x=True,
             expand_y=True
         )],
@@ -48,7 +48,7 @@ def main_gui(run_func):
          sg.Text('线程数量:'), sg.InputText(str(task_manager.THREAD_COUNT), key='-THREAD_COUNT-', size=(5, 1)),
          sg.Button('开始'), sg.Button('退出'), sg.Button('关于')]
     ]
-
+    tooltip = None
     def update_result_count():
         nonlocal last_task_ids
 
@@ -101,10 +101,43 @@ def main_gui(run_func):
                 table.item(children[row_index], values=row_data)
             last_task_ids = current_task_ids.copy()
 
+    def show_tooltip(event):
+        nonlocal tooltip
+        table = window['-TASK_TABLE-'].Widget
+        x, y = event.x, event.y
+        item = table.identify_row(y)
+        col = table.identify_column(x)
+        error_col_index = 7  # 错误信息列的索引，从0开始
+        if tooltip:
+            tooltip.destroy()
+        if col == f'#{error_col_index + 1}' and item:  # tkinter列索引从 #1 开始
+            task_id = int(item)
+            task_info = task_manager.TASK_DICT.get(list(task_manager.TASK_DICT.keys())[task_id])
+            error_info = task_info.get('error', '')
+            if not error_info:
+                return
+            tooltip = tk.Toplevel(table)
+            tooltip.wm_overrideredirect(True)
+            tooltip.wm_geometry(f"+{event.x_root + 15}+{event.y_root + 10}")
+            label = tk.Label(tooltip, text=error_info, background="#ffffe0", relief="solid", borderwidth=1, wraplength=300)
+            label.pack()
+            tooltip.update_idletasks()
+            tooltip.deiconify()
+
+            # 鼠标移出隐藏提示框
+            # def hide_tooltip(event):
+            #     nonlocal is_show_tooltip
+            #     tooltip.destroy()
+            #     is_show_tooltip = False
+            #
+            # table.bind("<Leave>", hide_tooltip, add="+")
 
 
     window = sg.Window('自动上传工具 - 任务监控', layout, resizable=True, finalize=True)
     window.set_min_size((800, 600))
+
+    table = window['-TASK_TABLE-'].Widget
+    table.bind("<Motion>", show_tooltip)
     # 启动更新线程
     threading.Thread(target=update_result_count, daemon=True).start()
     while True:

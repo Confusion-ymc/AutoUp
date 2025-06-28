@@ -100,7 +100,8 @@ class AutoBrowserUpload:
                         task_manager.RUNNING_COUNT.remove(file_path.name)
                     except:
                         pass
-                    Tools.clear_dir(task_manager.TEMP_DIR)
+                    Tools.clear_dir(task_manager.TEMP_DIR/file_path.stem)
+                    Tools.clear_dir(task_manager.TEMP_DIR/file_path.name)
             self.browser.close()
 
         self.thread = threading.Thread(target=_start, daemon=True, args=(self,))
@@ -162,7 +163,7 @@ class AutoBrowserUpload:
         self.page.locator('.c-btn.btn-blue.c-btn-320').click()
 
     def check_result(self, file_path: Path):
-        for i in range(600):
+        for i in range(300):
             tips = ''
             try:
                 tips = self.page.locator('.body-content').locator('.p10').text_content(timeout=500)

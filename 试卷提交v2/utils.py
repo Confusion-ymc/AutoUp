@@ -79,7 +79,8 @@ class Tools:
         try:
             if dir_path.is_dir():
                 shutil.rmtree(dir_path)
-            dir_path.mkdir(exist_ok=True)
+            if dir_path.is_file():
+                dir_path.unlink()
         except Exception as e:
             print(f"[警告] 清空目录出错 [{dir_path}] {e}")
 
