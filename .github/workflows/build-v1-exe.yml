@@ -50,5 +50,5 @@ jobs:
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
-          name: dist.zip
+          name: dist
           path: D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\${{ env.replaced_filename }}.zip
