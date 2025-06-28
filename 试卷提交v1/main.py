@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-import time
 import zipfile
 from pathlib import Path
 from time import sleep
@@ -19,7 +18,7 @@ SPACIAL_DIR = '精品资料'
 
 TEMP_DIR = 'temp'
 
-WAIT_TIME = 1  # 每步等待秒
+WAIT_TIME = 0.3  # 每步等待秒
 
 UPLOAD_DIR = Path(UPLOAD_DIR)
 SUCCESS_DIR = Path(SUCCESS_DIR)
@@ -53,9 +52,14 @@ class FileParse:
         self.class_type, self.class_child = self.get_class()
 
     def get_grade(self):
-        if '上' in self.file_path.name:
+        safe_name = self.file_path.name
+        for city_name in ['上海', '上饶', '上杭', '上虞', '上高', '上犹', "上林", "上蔡", "上街", "上党", "上甘岭",
+                    "下关", "下蔡", "下溪", "下川" "下邳", "下花园", "下陆区", "下城区", "下蜀镇", "下仓镇", "下沙"]:
+            safe_name = safe_name.replace(city_name, '')
+
+        if '上' in safe_name:
             step = '上'
-        elif '下' in self.file_path.name:
+        elif '下' in safe_name:
             step = '下'
         else:
             step = ''
@@ -82,7 +86,6 @@ class FileParse:
                 if item_index <= index:
                     index = item_index
                     res = (subject_type, subject)
-
         if res:
             return res
         raise Exception('学科解析失败')
@@ -130,15 +133,8 @@ class AutoBrowserUpload:
             return False
 
     def login(self):
-        # user_name = input('请输入账号:\n')
-        # password = input('请输入密码:\n')
         url = 'https://passport.21cnjy.com/login?jump_url=http%3A%2F%2Fwww.21cnjy.com%2Fwebupload%2F'
         self.page.goto(url)
-        # self.page.click('text=账号密码登录')
-        # self.page.get_by_placeholder("手机/邮箱/用户名").fill(user_name)
-        # self.page.get_by_placeholder("请输入密码").fill(password)
-        # time.sleep(1)
-        # self.page.get_by_role("button", name="登录").click()
         try:
             # 等待登录
             print('请在浏览器完成登录')
@@ -160,6 +156,19 @@ class AutoBrowserUpload:
         except:
             pass
 
+    def check_is_jp(self):
+        has_type = []
+        # 解压后的文件列表
+        for file_path in list_all_files(Path(TEMP_DIR)):
+            if '解析版' in file_path.name:
+                has_type.append('解析版')
+            elif '原卷版' in file_path.name:
+                has_type.append('原卷版')
+            else:
+                pass
+            if '解析版' in has_type and '原卷版' in has_type:
+                raise SpacialFileError('属于精品文件')
+
     def upload(self, file_path: Path):
         # 如果是压缩文件zip 先解压然后一个一个处理
         if file_path.suffix == '.zip':
@@ -169,10 +178,9 @@ class AutoBrowserUpload:
             # 解压文件
             with zipfile.ZipFile(file_path, 'r') as zip_ref:
                 zip_ref.extractall(TEMP_DIR)
+            self.check_is_jp()
             # 解压后的文件列表
             for file_path in list_all_files(Path(TEMP_DIR)):
-                if '解析版' in file_path.name or '原卷版' in file_path.name:
-                    raise SpacialFileError('属于精品文件')
                 self.upload(file_path)
             # 清空文件夹
             if TEMP_DIR.exists():
@@ -257,7 +265,7 @@ class AutoBrowserUpload:
     def check_result(self):
         result = self.page.locator('.result-box-word')
         try:
-            result.wait_for(timeout=10000)
+            result.wait_for(timeout=300000)
             assert '上传成功' in result.text_content(), '上传失败'
         except Exception as e:
             raise e
@@ -306,14 +314,17 @@ class UploadLoger:
 
 def for_upload_files():
     for file_path in list_all_files(UPLOAD_DIR):
-        if file_path.suffix in ['.docx', '.zip']:
+        if file_path.suffix in ['.pdf', '.docx', '.zip']:
             yield file_path
 
 
 def move_to_dir(file_path: Path, dir_path: Path):
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-    os.rename(file_path, dir_path.name + '/' + file_path.name)
+    try:
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        os.rename(file_path, dir_path.name + '/' + file_path.name)
+    except Exception as e:
+        print(f"[警告] 移动文件出错: {e}")
 
 
 def read_grade_mapping_from_excel(file_path, sheet_name=0):
