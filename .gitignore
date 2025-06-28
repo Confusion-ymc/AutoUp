@@ -10,7 +10,7 @@
 *.png
 *.doc
 *.docx
-*.xls
+*/待上传/
 *.xlsx
 *.ppt
 cookies.json
