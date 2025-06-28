@@ -18,7 +18,7 @@ SPACIAL_DIR = '精品资料'
 
 TEMP_DIR = 'temp'
 
-WAIT_TIME = 0.3  # 每步等待秒
+WAIT_TIME = 1  # 每步等待秒
 
 UPLOAD_DIR = Path(UPLOAD_DIR)
 SUCCESS_DIR = Path(SUCCESS_DIR)
