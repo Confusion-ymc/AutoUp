@@ -18,7 +18,7 @@ SPACIAL_DIR = '精品资料'
 
 TEMP_DIR = 'temp'
 
-WAIT_TIME = 1  # 每步等待秒
+WAIT_TIME = 0.3  # 每步等待秒
 
 UPLOAD_DIR = Path(UPLOAD_DIR)
 SUCCESS_DIR = Path(SUCCESS_DIR)
@@ -222,12 +222,14 @@ class AutoBrowserUpload:
         subject_type, subject = file_parse.subject_type, file_parse.subject
         self.page.locator(".xdxk_select").click()
         sleep(WAIT_TIME)
+        self.page.locator("#xd").get_by_text(grade_type, exact=True).hover()
+        sleep(1)
         self.page.locator("#xd").get_by_text(grade_type, exact=True).click()
-        sleep(WAIT_TIME)
+        sleep(1)
         self.page.locator("#chid").get_by_text(subject_type, exact=True).click()
         sleep(WAIT_TIME)
 
-        # 选择栏目
+        # 资料栏目
         class_type, class_child = file_parse.class_type, file_parse.class_child
         self.page.locator("#j-add-cate").click()
         sleep(WAIT_TIME)
