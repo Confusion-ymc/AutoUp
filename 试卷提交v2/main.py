@@ -14,6 +14,7 @@ from exception import MyRepeatError
 from task_manager import TaskManager, task_manager
 from ui2 import main_gui
 from utils import Tools, FileParse
+from 试卷提交v1.main import TEMP_DIR
 
 warnings.filterwarnings("ignore", category=UserWarning, module='openpyxl')
 
@@ -101,6 +102,7 @@ class AutoBrowserUpload:
                         self.task_manager.RUNNING_COUNT.remove(file_path.name)
                     except:
                         pass
+                    Tools.clear_dir(TEMP_DIR)
             self.browser.close()
 
         self.thread = threading.Thread(target=_start, daemon=True, args=(self,))
@@ -123,27 +125,35 @@ class AutoBrowserUpload:
             index = 0
             for_upload_files = list(Tools.list_all_files(unzip_dir))
             media_files = [file_item_path for file_item_path in for_upload_files if file_item_path.suffix == '.mp3']
-            assert len(media_files) <= 1, '压缩包内有多个音频文件 跳过上传'
-            for file_item_path in for_upload_files:
-                if file_item_path.suffix == '.mp3':
-                    continue
-                index += 1
-                if index == 1:
-                    self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), file_item_path)
-                else:
-                    self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-200'), file_item_path)
-                if '解析' in file_item_path.stem or '答案' in file_item_path.stem:
-                    self.page.locator('.upload-after').locator('input[type=text]').all()[index - 1].fill('答案解析')
-                else:
-                    self.page.locator('.upload-after').locator('input[type=text]').all()[index - 1].fill(data_path.stem)
-                    if media_files:
-                        self.browser.upload_file(self.page,
-                                                 self.page.locator('.upload-after').get_by_text('添加音频',
-                                                                                                exact=True).all()[
-                                                     index - 1],
-                                                 media_files[0])
-            # 标题合集
-            self.page.get_by_placeholder('请输入标题', exact=True).fill(data_path.stem)
+            if len(media_files) == 1:
+                for file_item_path in for_upload_files:
+                    if file_item_path.suffix == '.mp3':
+                        continue
+                    index += 1
+                    if index == 1:
+                        self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), file_item_path)
+                    else:
+                        self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-200'), file_item_path)
+                    if '解析' in file_item_path.stem or '答案' in file_item_path.stem:
+                        self.page.locator('.upload-after').locator('input[type=text]').all()[index - 1].fill('答案解析')
+                    else:
+                        self.page.locator('.upload-after').locator('input[type=text]').all()[index - 1].fill(data_path.stem)
+                        if media_files:
+                            self.browser.upload_file(self.page,
+                                                     self.page.locator('.upload-after').get_by_text('添加音频',
+                                                                                                    exact=True).all()[
+                                                         index - 1],
+                                                     media_files[0])
+                # 标题合集
+                self.page.get_by_placeholder('请输入标题', exact=True).fill(data_path.stem)
+            elif len(media_files) == 0:
+                # 重新压缩文件
+                Tools.compress_files_to_zip(for_upload_files, TEMP_DIR / data_path.name)
+                self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), TEMP_DIR / data_path.name)
+
+            elif len(media_files) > 1:
+                raise Exception('压缩包内有多个音频文件 跳过上传')
+
         else:
             self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), data_path)
 

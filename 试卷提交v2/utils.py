@@ -1,5 +1,6 @@
 import os
 import queue
+import shutil
 import threading
 import zipfile
 from pathlib import Path
@@ -69,6 +70,36 @@ class Tools:
         return to_dir / file_path.stem
 
     @staticmethod
+    def clear_dir(dir_path: Path):
+        """
+        删除目录下的所有文件
+        :param dir_path:
+        :return:
+        """
+        try:
+            if dir_path.is_dir():
+                shutil.rmtree(dir_path)
+            dir_path.mkdir(exist_ok=True)
+        except Exception as e:
+            print(f"[警告] 清空目录出错 [{dir_path}] {e}")
+
+    @staticmethod
+    def compress_files_to_zip(file_paths: list[Path], zip_file_name: Path):
+        """
+        将指定文件路径列表中的文件压缩成一个 ZIP 文件。
+
+        :param file_paths: 文件路径列表，每个元素为文件的绝对或相对路径
+        :param zip_file_name: 生成的 ZIP 文件的名称
+        """
+        with zipfile.ZipFile(zip_file_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in file_paths:
+                if file_path.is_file():
+                    # 将文件添加到 ZIP 文件中，保留原文件结构
+                    zipf.write(file_path, arcname=file_path.name)
+                else:
+                    print(f"警告: 文件 {file_path} 不存在，跳过。")
+
+    @staticmethod
     def load_keywords(file_path, sheet_name):
         try:
             # 读取Excel文件
@@ -106,4 +137,5 @@ class FileParse:
         for grade, kw, catalog in self.catalog_map:
             if grade == self.grade_name and kw in self.file_path.name:
                 return catalog
-        raise Exception('目录解析失败')
+        print('[警告] 目录解析失败，使用默认目录 "月考试题"')
+        return '月考试题'
