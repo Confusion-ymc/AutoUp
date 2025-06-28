@@ -11,10 +11,9 @@ import warnings
 
 from browser import Browser
 from exception import MyRepeatError
-from task_manager import TaskManager, task_manager
+from task_manager import task_manager
 from ui2 import main_gui
 from utils import Tools, FileParse
-from 试卷提交v1.main import TEMP_DIR
 
 warnings.filterwarnings("ignore", category=UserWarning, module='openpyxl')
 
@@ -29,15 +28,14 @@ class MyBrowser(Browser):
 
 
 class AutoBrowserUpload:
-    def __init__(self, task_name: str, tk_mgr: TaskManager):
+    def __init__(self, task_name: str):
         self.thread_name = task_name
         self.page: Optional[Page] = None
         self.target_url = 'https://www.jyeoo.com/ushare/collectCenter'
         self.stop = False
         self.thread = None
         self.browser = MyBrowser()
-        self.task_manager = tk_mgr
-        self.task_queue = tk_mgr.task_queue
+        self.task_queue = task_manager.task_queue
 
     def open_page(self):
         self.page.goto(self.target_url)
@@ -55,54 +53,54 @@ class AutoBrowserUpload:
                     time.sleep(1)
                     continue
                 try:
-                    file_path = self.task_manager.TASK_DICT[task_id]['file_path']
+                    file_path = task_manager.TASK_DICT[task_id]['file_path']
                     # 维护任务信息
-                    self.task_manager.TASK_DICT[task_id]['status'] = '执行中'
-                    self.task_manager.TASK_DICT[task_id]['status_changed'] = True
-                    self.task_manager.TASK_DICT[task_id]['thread'] = self.thread_name
-                    self.task_manager.TASK_DICT[task_id]['start_time'] = datetime.datetime.now()
-                    self.task_manager.RUNNING_COUNT.append(file_path.name)
+                    task_manager.TASK_DICT[task_id]['status'] = '执行中'
+                    task_manager.TASK_DICT[task_id]['status_changed'] = True
+                    task_manager.TASK_DICT[task_id]['thread'] = self.thread_name
+                    task_manager.TASK_DICT[task_id]['start_time'] = datetime.datetime.now()
+                    task_manager.RUNNING_COUNT.append(file_path.name)
                     self.open_page()
                     self.fill_info(file_path)
                     self.check_result(file_path)
 
                     # 维护任务信息
-                    self.task_manager.TASK_DICT[task_id]['status'] = '成功'
+                    task_manager.TASK_DICT[task_id]['status'] = '成功'
                     # 移动到成功文件夹
-                    self.task_manager.SUCCESS_COUNT.append(file_path.name)
-                    Tools.move_to_dir(file_path, self.task_manager.SUCCESS_DIR)
+                    task_manager.SUCCESS_COUNT.append(file_path.name)
+                    Tools.move_to_dir(file_path, task_manager.SUCCESS_DIR)
                 except MyRepeatError as e:
                     # 维护任务信息
-                    self.task_manager.TASK_DICT[task_id]['status'] = '重复'
-                    self.task_manager.TASK_DICT[task_id]['error'] = str(e)
+                    task_manager.TASK_DICT[task_id]['status'] = '重复'
+                    task_manager.TASK_DICT[task_id]['error'] = str(e)
 
-                    self.task_manager.logger.log(f'[{self.thread_name}] [重复] {file_path.name} [{e}]')
+                    task_manager.logger.log(f'[{self.thread_name}] [重复] {file_path.name} [{e}]')
                     # 移动到重复文件夹
-                    self.task_manager.REPEAT_COUNT.append(file_path.name)
-                    Tools.move_to_dir(file_path, self.task_manager.REPEAT_DIR)
+                    task_manager.REPEAT_COUNT.append(file_path.name)
+                    Tools.move_to_dir(file_path, task_manager.REPEAT_DIR)
                 except Exception as e:
                     # 维护任务信息
-                    self.task_manager.TASK_DICT[task_id]['status'] = '失败'
-                    self.task_manager.TASK_DICT[task_id]['error'] = str(e)
+                    task_manager.TASK_DICT[task_id]['status'] = '失败'
+                    task_manager.TASK_DICT[task_id]['error'] = str(e)
 
-                    self.task_manager.logger.log(f'[{self.thread_name}] [失败] {file_path.name} [{e}]')
+                    task_manager.logger.log(f'[{self.thread_name}] [失败] {file_path.name} [{e}]')
                     # 移动到失败文件夹
-                    self.task_manager.FAILED_COUNT.append(file_path.name)
-                    Tools.move_to_dir(file_path, self.task_manager.FAILED_DIR)
+                    task_manager.FAILED_COUNT.append(file_path.name)
+                    Tools.move_to_dir(file_path, task_manager.FAILED_DIR)
                 finally:
-                    self.task_manager.TASK_DICT[task_id]['status_changed'] = True
-                    self.task_manager.TASK_DICT[task_id]['end_time'] = datetime.datetime.now()
-                    self.task_manager.TASK_DICT[task_id]['duration'] = int((
-                                                                                   self.task_manager.TASK_DICT[task_id][
+                    task_manager.TASK_DICT[task_id]['status_changed'] = True
+                    task_manager.TASK_DICT[task_id]['end_time'] = datetime.datetime.now()
+                    task_manager.TASK_DICT[task_id]['duration'] = int((
+                                                                                   task_manager.TASK_DICT[task_id][
                                                                                        'end_time'] -
-                                                                                   self.task_manager.TASK_DICT[task_id][
+                                                                                   task_manager.TASK_DICT[task_id][
                                                                                        'start_time']
                                                                            ).total_seconds())
                     try:
-                        self.task_manager.RUNNING_COUNT.remove(file_path.name)
+                        task_manager.RUNNING_COUNT.remove(file_path.name)
                     except:
                         pass
-                    Tools.clear_dir(TEMP_DIR)
+                    Tools.clear_dir(task_manager.TEMP_DIR)
             self.browser.close()
 
         self.thread = threading.Thread(target=_start, daemon=True, args=(self,))
@@ -116,11 +114,11 @@ class AutoBrowserUpload:
     def fill_info(self, data_path: Path):
         # 填写内容 以及 上传文件
         # logger.log(f'[{self.task_name}] [开始上传] {data_path.name}')
-        file_parse = FileParse(data_path, self.task_manager.GRADE_MAP, self.task_manager.CLASS_MAP,
-                               self.task_manager.CATALOG_MAP)
+        file_parse = FileParse(data_path, task_manager.GRADE_MAP, task_manager.CLASS_MAP,
+                               task_manager.CATALOG_MAP)
         if data_path.suffix == '.zip':
             # 上传类型是压缩包
-            unzip_dir = Tools.unzip_file(data_path, self.task_manager.TEMP_DIR)
+            unzip_dir = Tools.unzip_file(data_path, task_manager.TEMP_DIR)
             # 找到所有的文件
             index = 0
             for_upload_files = list(Tools.list_all_files(unzip_dir))
@@ -148,8 +146,8 @@ class AutoBrowserUpload:
                 self.page.get_by_placeholder('请输入标题', exact=True).fill(data_path.stem)
             elif len(media_files) == 0:
                 # 重新压缩文件
-                Tools.compress_files_to_zip(for_upload_files, TEMP_DIR / data_path.name)
-                self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), TEMP_DIR / data_path.name)
+                Tools.compress_files_to_zip(for_upload_files, task_manager.TEMP_DIR / data_path.name)
+                self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), task_manager.TEMP_DIR / data_path.name)
 
             elif len(media_files) > 1:
                 raise Exception('压缩包内有多个音频文件 跳过上传')
@@ -178,7 +176,7 @@ class AutoBrowserUpload:
             except:
                 continue
             if '操作成功' in tips_message and '上传成功' in tips_message:
-                self.task_manager.logger.log(f'[{self.thread_name}] [上传成功] {file_path.name}')
+                task_manager.logger.log(f'[{self.thread_name}] [上传成功] {file_path.name}')
                 return True
             else:
                 raise MyRepeatError(tips_message)
@@ -196,7 +194,7 @@ def run():
     login_b.close()
     runners = []
     for i in range(task_manager.THREAD_COUNT):
-        robot = AutoBrowserUpload(task_name=f'线程{i + 1}', tk_mgr=task_manager)
+        robot = AutoBrowserUpload(task_name=f'线程{i + 1}')
         robot.start()
         runners.append(robot)
     for runner in runners:
