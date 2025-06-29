@@ -13,4 +13,7 @@
 */待上传/
 *.xlsx
 *.ppt
+*/dist/
+*/build/
+*.spec
 cookies.json

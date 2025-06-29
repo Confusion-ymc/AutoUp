@@ -11,22 +11,30 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - uses: actions/cache@v4
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
 
-      - run: pip install -r requirements.txt
-      - run: pip install PySimpleGUI-4.60.5-py3-none-any.whl
-      - run: |
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install PySimpleGUI-4.60.5-py3-none-any.whl  # 安装本地 whl 文件
+
+
+      - name: Install Playwright Chromium
+        run: |
           $env:PLAYWRIGHT_BROWSERS_PATH="0"
           playwright install chromium
-        shell: pwsh
+        shell: powershell
 
       - name: Build EXE
         working-directory: ${{ env.workdir }}
