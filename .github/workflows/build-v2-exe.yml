@@ -49,7 +49,7 @@ jobs:
           Copy-Item -Path "关键词.xls" -Destination "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName\" -Force
           # 构建正确的压缩路径
           # Compress-Archive -Path "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName" -DestinationPath "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName.zip" -Force
-        shell: powershell
+        shell: pwsh
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
