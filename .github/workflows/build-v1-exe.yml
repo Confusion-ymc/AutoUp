@@ -29,7 +29,7 @@ jobs:
       - name: Build EXE
         working-directory: ${{ env.workdir }}
         run: |
-          pyinstaller -w ${{ env.target_file }}
+          pyinstaller ${{ env.target_file }}
         shell: powershell
 
       - name: Compress build folder
