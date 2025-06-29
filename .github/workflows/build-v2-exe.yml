@@ -18,11 +18,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
-
-      - uses: actions/cache@v4
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
+#
+#      - uses: actions/cache@v4
+#        with:
+#          path: ${{ env.pythonLocation }}
+#          key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
 
       - name: Install dependencies
         run: |
