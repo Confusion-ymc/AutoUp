@@ -18,19 +18,16 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
-#
-#      - uses: actions/cache@v4
-#        with:
-#          path: ${{ env.pythonLocation }}
-#          key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
           pip install PySimpleGUI-4.60.5-py3-none-any.whl  # 安装本地 whl 文件
-
-      - name: Install Chromium
-        run: |
           $env:PLAYWRIGHT_BROWSERS_PATH="0"
           playwright install chromium
         shell: powershell
