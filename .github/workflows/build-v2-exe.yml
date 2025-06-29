@@ -47,6 +47,7 @@ jobs:
           # 添加文件
           echo "replaced_filename=$fileName" >> $env:GITHUB_ENV
           Copy-Item -Path "关键词.xls" -Destination "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName\" -Force
+          Copy-Item -Path "${{ env.pythonLocation }}\Lib\site-packages\playwright\driver\package\.local-browsers" -Destination "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName\_internal\playwright\driver\package" -Force
           # 构建正确的压缩路径
           # Compress-Archive -Path "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName" -DestinationPath "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName.zip" -Force
         shell: pwsh
