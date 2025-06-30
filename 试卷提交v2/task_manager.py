@@ -50,6 +50,7 @@ class TaskManager:
         self.logger = LogHandler()
         self.logger.update_logs()
         self.is_changed_listen_dir = False
+        self.show_browser = False
 
     def change_listen_dir(self, dir_path: Path):
         self.UPLOAD_DIR = dir_path
@@ -64,8 +65,7 @@ class TaskManager:
                         if file_path.name not in self.task_set:
                             self.task_set.add(file_path.name)
                             # 格式: {task_id: {'filename': '', 'status': '', 'thread': '', 'start_time': '', 'end_time': '', 'error': ''}}
-                            task_id = uuid.uuid4().__str__()
-                            self.TASK_DICT[task_id] = {
+                            self.TASK_DICT[file_path.name] = {
                                 'file_path': file_path,
                                 'filename': file_path.name,
                                 'status': '',
@@ -75,7 +75,7 @@ class TaskManager:
                                 'error': '',
                                 'status_changed': True
                             }
-                            self.task_queue.put(task_id)
+                            self.task_queue.put(file_path.name)
                 time.sleep(2)
                 if self.is_changed_listen_dir:
                     self.task_queue = queue.Queue()

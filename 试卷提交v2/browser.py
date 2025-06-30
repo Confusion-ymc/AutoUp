@@ -22,9 +22,9 @@ class Browser:
             file_chooser = fc_info.value
             file_chooser.set_files(file_path)
 
-    def lunch(self):
+    def lunch(self, headless=False):
         p = sync_playwright().start()
-        self.browser = p.chromium.launch(headless=False)
+        self.browser = p.chromium.launch(headless=headless)
         self.context = self.browser.new_context()
         self.main_page = self.create_page()
 

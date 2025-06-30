@@ -42,7 +42,7 @@ class AutoBrowserUpload:
 
     def start(self):
         def _start(self):
-            self.browser.lunch()
+            self.browser.lunch(headless=not task_manager.show_browser)
             self.browser.login()
             self.page = self.browser.main_page
             file_path = None
