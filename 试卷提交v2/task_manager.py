@@ -49,9 +49,13 @@ class TaskManager:
         ]
         self.logger = LogHandler()
         self.logger.update_logs()
-        self.start_listen()
+        self.is_changed_listen_dir = False
 
-    def start_listen(self):
+    def change_listen_dir(self, dir_path: Path):
+        self.UPLOAD_DIR = dir_path
+        self.is_changed_listen_dir = True
+
+    def start(self):
         def load_tasks(self: TaskManager):
             while True:
                 if self.LISTEN_DIR:
@@ -73,6 +77,11 @@ class TaskManager:
                             }
                             self.task_queue.put(task_id)
                 time.sleep(2)
+                if self.is_changed_listen_dir:
+                    self.task_queue = queue.Queue()
+                    self.task_set = set([])
+                    self.TASK_DICT = OrderedDict()
+                    self.is_changed_listen_dir = False
 
         threading.Thread(target=load_tasks, daemon=True, args=(self,)).start()
 

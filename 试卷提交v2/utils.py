@@ -37,7 +37,7 @@ class Tools:
     @staticmethod
     def list_all_files(directory: Path):
         """
-        遍历文件夹下所有文件（包括子文件夹）
+        只返回第一级目录下的文件，不包含子目录中的文件
 
         Args:
             directory (str): 要遍历的文件夹路径
@@ -45,12 +45,17 @@ class Tools:
         Returns:
             list: 所有文件的完整路径列表
         """
-        for root, dirs, files in os.walk(directory):
-            for file in files:
-                full_path = Path(os.path.join(root, file))
-                if full_path.suffix not in INCLUDE_FILES:
-                    continue
-                yield full_path
+        # 检查目录是否存在
+        if directory.exists() and directory.is_dir():
+            for item in directory.iterdir():
+                if item.is_file() and item.suffix in INCLUDE_FILES:
+                    yield item
+        # for root, dirs, files in os.walk(directory):
+        #     for file in files:
+        #         full_path = Path(os.path.join(root, file))
+        #         if full_path.suffix not in INCLUDE_FILES:
+        #             continue
+        #         yield full_path
 
     @staticmethod
     def move_to_dir(file_path: Path, dir_path: Path):
