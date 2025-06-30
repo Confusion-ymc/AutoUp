@@ -35,7 +35,7 @@ jobs:
       - name: Build EXE
         working-directory: ${{ env.workdir }}
         run: |
-          pyinstaller ${{ env.target_file }}
+          pyinstaller -w ${{ env.target_file }}
         shell: powershell
 
       - name: Copy files to dist folder
@@ -48,8 +48,6 @@ jobs:
           # 添加文件
           echo "replaced_filename=$fileName" >> $env:GITHUB_ENV
           Copy-Item -Path "关键词.xls" -Destination "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName\" -Force
-          # 构建正确的压缩路径
-          # Compress-Archive -Path "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName" -DestinationPath "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName.zip" -Force
         shell: pwsh
 
       - name: Upload EXE
