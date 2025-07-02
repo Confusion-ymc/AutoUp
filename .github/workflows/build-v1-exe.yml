@@ -1,27 +1,33 @@
-name: Build v1-2 EXE
+name: Build v1 EXE
 
 on:
    workflow_dispatch:
 
 env:
   target_file: "main.py"
-  workdir: "试卷提交v2"
+  workdir: "试卷提交v1"
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-          cache-dependency-path: '**/requirements.txt'
-      - run: pip install -r requirements.txt
-      - run: pip install PySimpleGUI-4.60.5-py3-none-any.whl
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Install Chromium
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
         run: |
+          pip install -r requirements.txt
+          pip install PySimpleGUI-4.60.5-py3-none-any.whl  # 安装本地 whl 文件
           $env:PLAYWRIGHT_BROWSERS_PATH="0"
           playwright install chromium
         shell: powershell
@@ -29,10 +35,10 @@ jobs:
       - name: Build EXE
         working-directory: ${{ env.workdir }}
         run: |
-          pyinstaller ${{ env.target_file }}
+          pyinstaller -w ${{ env.target_file }}
         shell: powershell
 
-      - name: Compress build folder
+      - name: Copy files to dist folder
         working-directory: ${{ env.workdir }}
         run: |
           $OutputEncoding = [System.Text.UTF8Encoding]::UTF8
@@ -42,12 +48,11 @@ jobs:
           # 添加文件
           echo "replaced_filename=$fileName" >> $env:GITHUB_ENV
           Copy-Item -Path "关键词.xls" -Destination "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName\" -Force
-          # 构建正确的压缩路径
-          Compress-Archive -Path "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName" -DestinationPath "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName.zip" -Force
         shell: pwsh
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\${{ env.replaced_filename }}.zip
+          name: ${{ env.replaced_filename }}
+          include-hidden-files: true
+          path: D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\${{ env.replaced_filename }}\*

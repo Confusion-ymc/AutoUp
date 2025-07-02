@@ -177,6 +177,9 @@ class AutoBrowserUpload:
             except:
                 continue
             if '操作成功' in tips_message and '上传成功' in tips_message:
+                if "已经有用户上传了，不能重复上传呢!" in tips_message:
+                    self.page.locator('.msgtip:visible').get_by_text('我知道了', exact=True).click()
+                    raise MyRepeatError(f'部分重复! {tips_message}')
                 task_manager.logger.log(f'[{self.thread_name}] [上传成功] {file_path.name}')
                 return True
             else:
