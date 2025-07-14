@@ -1,0 +1,58 @@
+name: Build v2 EXE
+
+on:
+   workflow_dispatch:
+
+env:
+  target_file: "main.py"
+  workdir: "商品上传v3"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install PySimpleGUI-4.60.5-py3-none-any.whl  # 安装本地 whl 文件
+          $env:PLAYWRIGHT_BROWSERS_PATH="0"
+          playwright install chromium
+        shell: powershell
+
+      - name: Build EXE
+        working-directory: ${{ env.workdir }}
+        run: |
+          pyinstaller -w ${{ env.target_file }}
+        shell: powershell
+
+      - name: Copy files to dist folder
+        working-directory: ${{ env.workdir }}
+        run: |
+          $OutputEncoding = [System.Text.UTF8Encoding]::UTF8
+          $targetFile = "${{ env.target_file }}"
+          # 去除 .py 后缀
+          $fileName = $targetFile -replace '\.py$', ''
+          # 添加文件
+          echo "replaced_filename=$fileName" >> $env:GITHUB_ENV
+          Copy-Item -Path "汇率设置.txt" -Destination "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName\" -Force
+        shell: pwsh
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.replaced_filename }}
+          include-hidden-files: true
+          path: D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\${{ env.replaced_filename }}\*
