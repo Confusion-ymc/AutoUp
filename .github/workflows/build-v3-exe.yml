@@ -1,4 +1,4 @@
-name: Build v2 EXE
+name: Build v3 EXE
 
 on:
    workflow_dispatch:
