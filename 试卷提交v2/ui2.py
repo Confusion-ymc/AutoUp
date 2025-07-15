@@ -7,7 +7,8 @@ import PySimpleGUI as sg
 from task_manager import task_manager
 import tkinter as tk
 
-sg.theme('SystemDefaultForReal')
+
+# sg.theme('SystemDefaultForReal')
 
 
 def update_result_count(window):
@@ -65,8 +66,6 @@ def update_result_count(window):
         last_task_ids = current_task_ids.copy()
 
 
-
-
 def main_gui(run_func):
     font = ('微软雅黑', 12)
     # 定义表格列
@@ -96,7 +95,8 @@ def main_gui(run_func):
          sg.Text('重复数量:'), sg.Text('0', key='-REPEAT-'),
          sg.Text('失败数量:'), sg.Text('0', key='-FAILED-'),
          sg.Button('文件夹监听中', key='-LISTEN_DIR-'),
-         sg.FolderBrowse('选择上传文件夹', enable_events=True, change_submits=True, key='-CHANGE_LISTEN_DIR-', target = '-CHANGE_LISTEN_DIR-'),
+         sg.FolderBrowse('选择上传文件夹', enable_events=True, change_submits=True, key='-CHANGE_LISTEN_DIR-',
+                         target='-CHANGE_LISTEN_DIR-'),
          sg.Text(str(task_manager.UPLOAD_DIR.absolute()), key='-LISTEN_DIR_LABEL-'),
          sg.Checkbox("显示浏览器", default=task_manager.show_browser, enable_events=True, key="-SHOW_BROWSER-"),
          sg.Push(),
@@ -123,7 +123,8 @@ def main_gui(run_func):
             tooltip = tk.Toplevel(table)
             tooltip.wm_overrideredirect(True)
             tooltip.wm_geometry(f"+{event.x_root + 15}+{event.y_root + 10}")
-            label = tk.Label(tooltip, text=error_info, background="#ffffe0", relief="solid", borderwidth=1,
+            label = tk.Label(tooltip, text=error_info, background="#ffffe0", foreground="#000000", relief="solid",
+                             borderwidth=1,
                              wraplength=300)
             label.pack()
             tooltip.update_idletasks()
@@ -179,4 +180,3 @@ def main_gui(run_func):
     except Exception as e:
         print(e)
         sg.popup(f'程序出错：{e}')
-

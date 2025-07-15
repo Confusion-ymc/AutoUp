@@ -56,6 +56,11 @@ class TaskManager:
         self.UPLOAD_DIR = dir_path
         self.is_changed_listen_dir = True
 
+    def update_task_info(self, task_id: str, **kwargs):
+        if task_id in self.TASK_DICT:
+            self.TASK_DICT[task_id].update(kwargs)
+            self.TASK_DICT[task_id]['status_changed'] = True
+
     def start(self):
         def load_tasks(self: TaskManager):
             while True:
@@ -84,5 +89,6 @@ class TaskManager:
                     self.is_changed_listen_dir = False
 
         threading.Thread(target=load_tasks, daemon=True, args=(self,)).start()
+
 
 task_manager = TaskManager()

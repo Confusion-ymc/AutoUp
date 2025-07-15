@@ -46,16 +46,17 @@ class Tools:
             list: 所有文件的完整路径列表
         """
         # 检查目录是否存在
-        if directory.exists() and directory.is_dir():
-            for item in directory.iterdir():
-                if item.is_file() and item.suffix in INCLUDE_FILES:
-                    yield item
-        # for root, dirs, files in os.walk(directory):
-        #     for file in files:
-        #         full_path = Path(os.path.join(root, file))
-        #         if full_path.suffix not in INCLUDE_FILES:
-        #             continue
-        #         yield full_path
+        # if directory.exists() and directory.is_dir():
+        #     for item in directory.iterdir():
+        #         if item.is_file() and item.suffix in INCLUDE_FILES:
+        #             yield item
+
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                full_path = Path(os.path.join(root, file))
+                if full_path.suffix not in INCLUDE_FILES:
+                    continue
+                yield full_path
 
     @staticmethod
     def move_to_dir(file_path: Path, dir_path: Path):
@@ -90,7 +91,7 @@ class Tools:
             print(f"[警告] 清空目录出错 [{dir_path}] {e}")
 
     @staticmethod
-    def compress_files_to_zip(file_paths: list[Path], zip_file_name: Path):
+    def compress_files_to_zip(file_paths: list[Path], zip_file_name: Path, root_dir: Path):
         """
         将指定文件路径列表中的文件压缩成一个 ZIP 文件。
 
@@ -101,7 +102,7 @@ class Tools:
             for file_path in file_paths:
                 if file_path.is_file():
                     # 将文件添加到 ZIP 文件中，保留原文件结构
-                    zipf.write(file_path, arcname=file_path.name)
+                    zipf.write(file_path, arcname=file_path.relative_to(root_dir))
                 else:
                     print(f"警告: 文件 {file_path} 不存在，跳过。")
 

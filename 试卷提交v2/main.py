@@ -10,12 +10,14 @@ from playwright.sync_api import Locator, expect, Page
 import warnings
 
 from browser import Browser
-from exception import MyRepeatError, MyFailedError
+from exception import MyRepeatError
 from task_manager import task_manager
 from ui2 import main_gui
 from utils import Tools, FileParse
 
 warnings.filterwarnings("ignore", category=UserWarning, module='openpyxl')
+
+ALLOWED_FILE_EXTENSIONS = ['.doc', '.docx', '.pdf', '.mp3', '.mp4']
 
 
 class MyBrowser(Browser):
@@ -55,53 +57,44 @@ class AutoBrowserUpload:
                 try:
                     file_path = task_manager.TASK_DICT[task_id]['file_path']
                     # 维护任务信息
-                    task_manager.TASK_DICT[task_id]['status'] = '执行中'
-                    task_manager.TASK_DICT[task_id]['status_changed'] = True
-                    task_manager.TASK_DICT[task_id]['thread'] = self.thread_name
-                    task_manager.TASK_DICT[task_id]['start_time'] = datetime.datetime.now()
+                    task_manager.update_task_info(task_id,
+                                                  status='开始',
+                                                  thread=self.thread_name,
+                                                  start_time=datetime.datetime.now())
                     task_manager.RUNNING_COUNT.append(file_path.name)
                     self.open_page()
                     self.fill_info(file_path)
+                    task_manager.update_task_info(task_id, status='等待结果')
                     self.check_result(file_path)
-
                     # 维护任务信息
-                    task_manager.TASK_DICT[task_id]['status'] = '成功'
+                    task_manager.update_task_info(task_id, status='成功')
                     # 移动到成功文件夹
                     task_manager.SUCCESS_COUNT.append(file_path.name)
                     Tools.move_to_dir(file_path, task_manager.SUCCESS_DIR)
                 except MyRepeatError as e:
                     # 维护任务信息
-                    task_manager.TASK_DICT[task_id]['status'] = '重复'
-                    task_manager.TASK_DICT[task_id]['error'] = str(e)
-
+                    task_manager.update_task_info(task_id, status='重复', error=str(e))
                     task_manager.logger.log(f'[{self.thread_name}] [重复] {file_path.name} [{e}]')
                     # 移动到重复文件夹
                     task_manager.REPEAT_COUNT.append(file_path.name)
                     Tools.move_to_dir(file_path, task_manager.REPEAT_DIR)
                 except Exception as e:
                     # 维护任务信息
-                    task_manager.TASK_DICT[task_id]['status'] = '失败'
-                    task_manager.TASK_DICT[task_id]['error'] = str(e)
-
+                    task_manager.update_task_info(task_id, status='重复', error=str(e))
                     task_manager.logger.log(f'[{self.thread_name}] [失败] {file_path.name} [{e}]')
                     # 移动到失败文件夹
                     task_manager.FAILED_COUNT.append(file_path.name)
                     Tools.move_to_dir(file_path, task_manager.FAILED_DIR)
                 finally:
-                    task_manager.TASK_DICT[task_id]['status_changed'] = True
-                    task_manager.TASK_DICT[task_id]['end_time'] = datetime.datetime.now()
-                    task_manager.TASK_DICT[task_id]['duration'] = int((
-                                                                                   task_manager.TASK_DICT[task_id][
-                                                                                       'end_time'] -
-                                                                                   task_manager.TASK_DICT[task_id][
-                                                                                       'start_time']
-                                                                           ).total_seconds())
+                    end_time = datetime.datetime.now()
+                    duration = int((end_time - task_manager.TASK_DICT[task_id]['start_time']).total_seconds())
+                    task_manager.update_task_info(task_id, end_time=end_time, duration=duration)
                     try:
                         task_manager.RUNNING_COUNT.remove(file_path.name)
                     except:
                         pass
-                    Tools.clear_dir(task_manager.TEMP_DIR/file_path.stem)
-                    Tools.clear_dir(task_manager.TEMP_DIR/file_path.name)
+                    Tools.clear_dir(task_manager.TEMP_DIR / file_path.stem)
+                    Tools.clear_dir(task_manager.TEMP_DIR / file_path.name)
             self.browser.close()
 
         self.thread = threading.Thread(target=_start, daemon=True, args=(self,))
@@ -123,6 +116,8 @@ class AutoBrowserUpload:
             # 找到所有的文件
             index = 0
             for_upload_files = list(Tools.list_all_files(unzip_dir))
+            # 过滤文件
+            for_upload_files = [item for item in for_upload_files if item.suffix in ALLOWED_FILE_EXTENSIONS]
             media_files = [file_item_path for file_item_path in for_upload_files if file_item_path.suffix == '.mp3']
             if len(media_files) == 1:
                 for file_item_path in for_upload_files:
@@ -130,13 +125,16 @@ class AutoBrowserUpload:
                         continue
                     index += 1
                     if index == 1:
-                        self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), file_item_path)
+                        self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'),
+                                                 file_item_path)
                     else:
-                        self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-200'), file_item_path)
+                        self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-200'),
+                                                 file_item_path)
                     if '解析' in file_item_path.stem or '答案' in file_item_path.stem:
                         self.page.locator('.upload-after').locator('input[type=text]').all()[index - 1].fill('答案解析')
                     else:
-                        self.page.locator('.upload-after').locator('input[type=text]').all()[index - 1].fill(data_path.stem)
+                        self.page.locator('.upload-after').locator('input[type=text]').all()[index - 1].fill(
+                            data_path.stem)
                         if media_files:
                             self.browser.upload_file(self.page,
                                                      self.page.locator('.upload-after').get_by_text('添加音频',
@@ -147,12 +145,12 @@ class AutoBrowserUpload:
                 self.page.get_by_placeholder('请输入标题', exact=True).fill(data_path.stem)
             elif len(media_files) == 0:
                 # 重新压缩文件
-                # Tools.compress_files_to_zip(for_upload_files, task_manager.TEMP_DIR / data_path.name)
-                self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), data_path)
-
+                Tools.compress_files_to_zip(for_upload_files, task_manager.TEMP_DIR / data_path.name,
+                                            task_manager.TEMP_DIR)
+                self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'),
+                                         task_manager.TEMP_DIR / data_path.name)
             elif len(media_files) > 1:
                 raise Exception('压缩包内有多个音频文件 跳过上传')
-
         else:
             self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), data_path)
 
