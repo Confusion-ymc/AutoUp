@@ -7,8 +7,7 @@ import PySimpleGUI as sg
 from task_manager import task_manager
 import tkinter as tk
 
-
-# sg.theme('SystemDefaultForReal')
+sg.theme('SystemDefaultForReal')
 
 
 def update_result_count(window):
