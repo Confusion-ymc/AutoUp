@@ -10,7 +10,7 @@ from playwright.sync_api import Locator, expect, Page
 import warnings
 
 from browser import Browser
-from exception import MyRepeatError
+from exception import MyRepeatError, MyFailedError
 from task_manager import task_manager
 from ui2 import main_gui
 from utils import Tools, FileParse
@@ -147,8 +147,8 @@ class AutoBrowserUpload:
                 self.page.get_by_placeholder('请输入标题', exact=True).fill(data_path.stem)
             elif len(media_files) == 0:
                 # 重新压缩文件
-                Tools.compress_files_to_zip(for_upload_files, task_manager.TEMP_DIR / data_path.name)
-                self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), task_manager.TEMP_DIR / data_path.name)
+                # Tools.compress_files_to_zip(for_upload_files, task_manager.TEMP_DIR / data_path.name)
+                self.browser.upload_file(self.page, self.page.locator('.c-btn.btn-blue.c-btn-240'), data_path)
 
             elif len(media_files) > 1:
                 raise Exception('压缩包内有多个音频文件 跳过上传')
@@ -184,7 +184,7 @@ class AutoBrowserUpload:
                 task_manager.logger.log(f'[{self.thread_name}] [上传成功] {file_path.name}')
                 return True
             else:
-                raise MyRepeatError(tips_message)
+                raise Exception(tips_message)
         raise Exception('等待超时')
 
     def wait(self):
