@@ -56,3 +56,4 @@ jobs:
           name: ${{ env.replaced_filename }}
           include-hidden-files: true
           path: D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\${{ env.replaced_filename }}\*
+          retention-days: 1
