@@ -4,7 +4,7 @@ import threading
 import time
 from pathlib import Path
 from queue import Empty
-from typing import Optional
+from typing import Optional, List
 
 from playwright.sync_api import Locator, expect, Page
 import warnings
@@ -27,6 +27,17 @@ class MyBrowser(Browser):
 
     def check_login_status(self):
         expect(self.main_page.locator('.profile-drop')).to_be_visible(timeout=2000)
+
+
+def filter_files(file_list: List[Path]):
+    # 过滤文件
+    filtered_files = []
+    for file in file_list:
+        if file.suffix in ALLOWED_FILE_EXTENSIONS:
+            if '答题卡' in file.name:
+                continue
+            filtered_files.append(file)
+    return filtered_files
 
 
 class AutoBrowserUpload:
@@ -117,8 +128,10 @@ class AutoBrowserUpload:
             index = 0
             for_upload_files = list(Tools.list_all_files(unzip_dir))
             # 过滤文件
-            for_upload_files = [item for item in for_upload_files if item.suffix in ALLOWED_FILE_EXTENSIONS]
-            media_files = [file_item_path for file_item_path in for_upload_files if file_item_path.suffix in ['.mp3', '.mp4']]
+            # for_upload_files = [item for item in for_upload_files if item.suffix in ALLOWED_FILE_EXTENSIONS]
+            for_upload_files = filter_files(for_upload_files)
+            media_files = [file_item_path for file_item_path in for_upload_files if
+                           file_item_path.suffix in ['.mp3', '.mp4']]
             if len(media_files) == 1:
                 for file_item_path in for_upload_files:
                     if file_item_path.suffix == ['.mp3', '.mp4']:
