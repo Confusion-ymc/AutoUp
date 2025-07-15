@@ -118,10 +118,10 @@ class AutoBrowserUpload:
             for_upload_files = list(Tools.list_all_files(unzip_dir))
             # 过滤文件
             for_upload_files = [item for item in for_upload_files if item.suffix in ALLOWED_FILE_EXTENSIONS]
-            media_files = [file_item_path for file_item_path in for_upload_files if file_item_path.suffix == '.mp3']
+            media_files = [file_item_path for file_item_path in for_upload_files if file_item_path.suffix in ['.mp3', '.mp4']]
             if len(media_files) == 1:
                 for file_item_path in for_upload_files:
-                    if file_item_path.suffix == '.mp3':
+                    if file_item_path.suffix == ['.mp3', '.mp4']:
                         continue
                     index += 1
                     if index == 1:
@@ -135,12 +135,12 @@ class AutoBrowserUpload:
                     else:
                         self.page.locator('.upload-after').locator('input[type=text]').all()[index - 1].fill(
                             data_path.stem)
-                        if media_files:
-                            self.browser.upload_file(self.page,
-                                                     self.page.locator('.upload-after').get_by_text('添加音频',
-                                                                                                    exact=True).all()[
-                                                         index - 1],
-                                                     media_files[0])
+                        # 上传听力
+                        self.browser.upload_file(self.page,
+                                                 self.page.locator('.upload-after').get_by_text('添加音频',
+                                                                                                exact=True).all()[
+                                                     index - 1],
+                                                 media_files[0])
                 # 标题合集
                 self.page.get_by_placeholder('请输入标题', exact=True).fill(data_path.stem)
             elif len(media_files) == 0:
