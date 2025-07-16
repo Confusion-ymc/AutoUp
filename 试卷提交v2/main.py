@@ -91,7 +91,7 @@ class AutoBrowserUpload:
                     Tools.move_to_dir(file_path, task_manager.REPEAT_DIR)
                 except Exception as e:
                     # 维护任务信息
-                    task_manager.update_task_info(task_id, status='重复', error=str(e))
+                    task_manager.update_task_info(task_id, status='失败', error=str(e))
                     task_manager.logger.log(f'[{self.thread_name}] [失败] {file_path.name} [{e}]')
                     # 移动到失败文件夹
                     task_manager.FAILED_COUNT.append(file_path.name)
@@ -118,7 +118,6 @@ class AutoBrowserUpload:
 
     def fill_info(self, data_path: Path):
         # 填写内容 以及 上传文件
-        # logger.log(f'[{self.task_name}] [开始上传] {data_path.name}')
         file_parse = FileParse(data_path, task_manager.GRADE_MAP, task_manager.CLASS_MAP,
                                task_manager.CATALOG_MAP)
         if data_path.suffix == '.zip':
@@ -128,10 +127,11 @@ class AutoBrowserUpload:
             index = 0
             for_upload_files = list(Tools.list_all_files(unzip_dir))
             # 过滤文件
-            # for_upload_files = [item for item in for_upload_files if item.suffix in ALLOWED_FILE_EXTENSIONS]
             for_upload_files = filter_files(for_upload_files)
             media_files = [file_item_path for file_item_path in for_upload_files if
                            file_item_path.suffix in ['.mp3', '.mp4']]
+            if not for_upload_files:
+                raise Exception('压缩包内没有允许上传的文件 跳过上传')
             if len(media_files) == 1:
                 for file_item_path in for_upload_files:
                     if file_item_path.suffix == ['.mp3', '.mp4']:

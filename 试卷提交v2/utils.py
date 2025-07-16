@@ -94,7 +94,7 @@ class Tools:
     def compress_files_to_zip(file_paths: list[Path], zip_file_name: Path, root_dir: Path):
         """
         将指定文件路径列表中的文件压缩成一个 ZIP 文件。
-
+        :param root_dir:
         :param file_paths: 文件路径列表，每个元素为文件的绝对或相对路径
         :param zip_file_name: 生成的 ZIP 文件的名称
         """
