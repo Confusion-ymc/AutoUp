@@ -134,7 +134,7 @@ class AutoBrowserUpload:
                 raise Exception('压缩包内没有允许上传的文件 跳过上传')
             if len(media_files) == 1:
                 for file_item_path in for_upload_files:
-                    if file_item_path.suffix == ['.mp3', '.mp4']:
+                    if file_item_path.suffix in ['.mp3', '.mp4']:
                         continue
                     index += 1
                     if index == 1:
