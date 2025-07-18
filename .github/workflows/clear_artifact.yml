@@ -2,19 +2,20 @@ name: Clear Artifact
 
 on:
    workflow_dispatch:
+jobs:
+  clear:
+    steps:
+        - name: Checkout
+          uses: actions/checkout@v4
 
-steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+        - name: Create test file
+          run: echo hello > test.txt
 
-    - name: Create test file
-      run: echo hello > test.txt
+        - uses: actions/upload-artifact@v4
+          with:
+              name: my-artifact
+              path: test.txt
 
-    - uses: actions/upload-artifact@v4
-      with:
-          name: my-artifact
-          path: test.txt
-
-    - uses: geekyeggo/delete-artifact@v5
-      with:
-          name: my-artifact
+        - uses: geekyeggo/delete-artifact@v5
+          with:
+              name: my-artifact
