@@ -1,3 +1,8 @@
+name: Clear Artifact
+
+on:
+   workflow_dispatch:
+
 steps:
     - name: Checkout
       uses: actions/checkout@v4
