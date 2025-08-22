@@ -1,25 +1,27 @@
 name: Clear Artifact
 
 on:
-   workflow_dispatch:
+  workflow_dispatch:
+
 jobs:
   clear:
     runs-on: windows-latest
-     - name: Delete Old Artifacts
-     uses: actions/github-script@v6
-     id: artifact
-     with:
-       script: |
-         const res = await github.rest.actions.listArtifactsForRepo({
-           owner: context.repo.owner,
-           repo: context.repo.repo,
-         })
-         
-         res.data.artifacts
-           .forEach(({ id }) => {
-             github.rest.actions.deleteArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: id,
-             })
-           })
+    steps:
+      - name: Delete Old Artifacts
+        uses: actions/github-script@v6
+        id: artifact
+        with:
+          script: |
+            const res = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            })
+            
+            for (const artifact of res.data.artifacts) {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+              })
+              console.log(`Deleted artifact with ID: ${artifact.id}`)
+            }
