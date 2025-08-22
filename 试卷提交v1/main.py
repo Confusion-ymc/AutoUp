@@ -28,6 +28,18 @@ UPLOAD_LOG = Path(UPLOAD_LOG)
 TEMP_DIR = Path(TEMP_DIR)
 SPACIAL_DIR = Path(SPACIAL_DIR)
 
+all_dir = [UPLOAD_DIR, SUCCESS_DIR, FAILED_DIR, REPEAT_DIR, TEMP_DIR, SPACIAL_DIR]
+
+def init_dir(path_str):
+    new_path = Path(path_str)
+    new_path.mkdir(exist_ok=True)
+    return new_path
+
+for dir_path in all_dir:
+    try:
+        init_dir(dir_path)
+    except Exception as e:
+        print(e)
 
 class AlreadyUploadError(Exception):
     pass
@@ -35,6 +47,7 @@ class AlreadyUploadError(Exception):
 
 class SpacialFileError(Exception):
     pass
+
 
 
 class FileParse:
@@ -139,7 +152,7 @@ class AutoBrowserUpload:
         try:
             # 等待登录
             print('请在浏览器完成登录')
-            self.page.wait_for_url('https://www.21cnjy.com/webupload/', timeout=60000)
+            self.page.wait_for_url('https://www.21cnjy.com/webupload/', timeout=600000)
             # 获取 cookies
             cookies = self.browser.contexts[0].cookies()
             # 保存 cookies 到文件
@@ -200,7 +213,7 @@ class AutoBrowserUpload:
             success_tips = self.page.locator(
                 f'.file-info:has(input[value="{file_path.name}"]) .success-tips')
             try:
-                success_tips.wait_for(timeout=10000)
+                success_tips.wait_for(timeout=180 * 1000) # 毫秒
             except Exception as e:
                 raise e
 
