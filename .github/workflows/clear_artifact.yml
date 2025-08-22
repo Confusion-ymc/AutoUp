@@ -5,12 +5,21 @@ on:
 jobs:
   clear:
     runs-on: windows-latest
-    steps:
-        - name: Checkout
-          uses: actions/checkout@v4
-
-        - uses: geekyeggo/delete-artifact@v5
-          with:
-              name: |
-                main
-                dist.zip
+     - name: Delete Old Artifacts
+     uses: actions/github-script@v6
+     id: artifact
+     with:
+       script: |
+         const res = await github.rest.actions.listArtifactsForRepo({
+           owner: context.repo.owner,
+           repo: context.repo.repo,
+         })
+         
+         res.data.artifacts
+           .forEach(({ id }) => {
+             github.rest.actions.deleteArtifact({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               artifact_id: id,
+             })
+           })
