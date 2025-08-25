@@ -1,7 +1,7 @@
 name: Build v1 EXE
 
 on:
-   workflow_dispatch:
+  workflow_dispatch:
 
 env:
   target_file: "main.py"
@@ -48,19 +48,32 @@ jobs:
           # 添加文件
           echo "replaced_filename=$fileName" >> $env:GITHUB_ENV
           Copy-Item -Path "关键词.xls" -Destination "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName\" -Force
-          Compress-Archive -Path "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName" -DestinationPath "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName.zip" -Force
         shell: pwsh
-
 
       - name: Upload EXE
         uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\${{ env.replaced_filename }}.zip
+          name: ${{ env.replaced_filename }}
+          include-hidden-files: true
+          path: D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\${{ env.replaced_filename }}\
+
+
+#      - name: Copy files to dist folder
+#        working-directory: ${{ env.workdir }}
+#        run: |
+#          $OutputEncoding = [System.Text.UTF8Encoding]::UTF8
+#          $targetFile = "${{ env.target_file }}"
+#          # 去除 .py 后缀
+#          $fileName = $targetFile -replace '\.py$', ''
+#          # 添加文件
+#          echo "replaced_filename=$fileName" >> $env:GITHUB_ENV
+#          Copy-Item -Path "关键词.xls" -Destination "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName\" -Force
+#          Compress-Archive -Path "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName" -DestinationPath "D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\$fileName.zip" -Force
+#        shell: pwsh
 
 #      - name: Upload EXE
 #        uses: actions/upload-artifact@v4
 #        with:
-#          name: ${{ env.replaced_filename }}
-#          include-hidden-files: true
-#          path: D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\${{ env.replaced_filename }}\
+#          name: dist
+#          path: D:\a\AutoUp\AutoUp\${{ env.workdir }}\dist\${{ env.replaced_filename }}.zip
+
