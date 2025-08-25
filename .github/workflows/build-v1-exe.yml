@@ -35,7 +35,7 @@ jobs:
       - name: Build EXE
         working-directory: ${{ env.workdir }}
         run: |
-          pyinstaller -w ${{ env.target_file }}
+          pyinstaller ${{ env.target_file }}
         shell: powershell
 
       - name: Copy files to dist folder
