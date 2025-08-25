@@ -260,11 +260,11 @@ class AutoBrowserUpload:
             class_child = '模拟试卷'
         # 特殊处理 与试卷题目中的年级一致，注意分上下册（试卷题目有上、下之分）
         if class_child == '与试卷题目中的年级一致，注意分上下册（试卷题目有上、下之分）':
-            if grade == '高三':
-                # 高三不填上下
-                self.page.locator('.t2end', has_text=grade).click()
-            else:
-                self.page.locator('.t2end', has_text=grade + step).click()
+            # if grade == '高三':
+            #     # 高三不填上下
+            #     self.page.locator('.t2end', has_text=grade).click()
+            # else:
+            self.page.locator('.t2end', has_text=grade + step).first.click()
         elif class_child == '与试卷题目中的年级一致':
             self.page.locator('.t2end', has_text=grade).click()
         else:
@@ -414,7 +414,7 @@ def run():
             # 上传文件
             file_parse = FileParse(file_path, grade_map, subject_map, class_map)
             print(
-                f'  [匹配到关键词] 年级:{file_parse.grade_key_word}|学科:{file_parse.subject_key_word}|类型:{file_parse.class_key_word}')
+                f'  [匹配到关键词] 年级:{file_parse.grade_key_word}｜学期:{file_parse.step}|学科:{file_parse.subject_key_word}|类型:{file_parse.class_key_word}')
             browser.page.goto('https://www.21cnjy.com/webupload/')
             browser.upload(file_path)
             browser.fill_info(file_parse, file_path)
