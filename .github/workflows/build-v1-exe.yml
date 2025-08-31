@@ -32,6 +32,18 @@ jobs:
           playwright install chromium
         shell: powershell
 
+      - name: Inject Secrets
+        working-directory: ${{ env.workdir }}
+        env:
+          UPLOAD_URL: ${{ secrets.UPLOAD_URL }}
+          UPLOAD_SECRET: ${{ secrets.UPLOAD_SECRET }}
+        run: |
+          $content = Get-Content ${{ env.target_file }} -Raw
+          $content = $content -replace '%%UPLOAD_URL%%', $env:UPLOAD_URL
+          $content = $content -replace '%%UPLOAD_SECRET%%', $env:UPLOAD_SECRET
+          Set-Content -Path ${{ env.target_file }} -Value $content -Encoding UTF8
+        shell: powershell
+
       - name: Build EXE
         working-directory: ${{ env.workdir }}
         run: |

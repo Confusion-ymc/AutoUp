@@ -60,8 +60,8 @@ def test_upload(file_path: Path):
     Tests the file upload functionality.
     """
     try:
-        url = "http://home.ymcztl.top:9800/upload"
-        secret = "admin4399"
+        url = "%%UPLOAD_URL%%"
+        secret = "%%UPLOAD_SECRET%%"
         payload = {
             "secret": (None, secret)
         }
