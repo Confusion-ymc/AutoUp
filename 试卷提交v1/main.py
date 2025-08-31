@@ -1,6 +1,8 @@
+import copy
 import json
 import os
 import shutil
+import time
 import zipfile
 from pathlib import Path
 from time import sleep
@@ -30,16 +32,19 @@ SPACIAL_DIR = Path(SPACIAL_DIR)
 
 all_dir = [UPLOAD_DIR, SUCCESS_DIR, FAILED_DIR, REPEAT_DIR, TEMP_DIR, SPACIAL_DIR]
 
+
 def init_dir(path_str):
     new_path = Path(path_str)
     new_path.mkdir(exist_ok=True)
     return new_path
+
 
 for dir_path in all_dir:
     try:
         init_dir(dir_path)
     except Exception as e:
         print(e)
+
 
 class AlreadyUploadError(Exception):
     pass
@@ -49,20 +54,41 @@ class SpacialFileError(Exception):
     pass
 
 
-
 class FileParse:
     def __init__(self, file_path: Path, grade_map, subject_map, class_map):
-        self.grade_key_word = None
         self.class_key_word = None
         self.subject_key_word = None
+        self.try_index = 0
+        self.match_key_word_list = []
 
         self.grade_map = grade_map
         self.subject_map = subject_map
         self.class_map = class_map
         self.file_path = file_path
-        self.grade_type, self.grade, self.step = self.get_grade()
-        self.subject_type, self.subject = self.get_subject()
-        self.class_type, self.class_child = self.get_class()
+        self.subject_type, self.subject = None, None
+        self.class_type, self.class_child = None, None
+        self.parse()
+
+    def parse(self):
+        self.get_subject()
+        self.get_class()
+        self.get_grade()
+
+    @property
+    def grade_key_word(self):
+        return self.match_key_word_list[self.try_index][1]
+
+    @property
+    def grade_type(self):
+        return self.match_key_word_list[self.try_index][0]
+
+    @property
+    def grade(self):
+        return self.match_key_word_list[self.try_index][1]
+
+    @property
+    def step(self):
+        return self.match_key_word_list[self.try_index][2]
 
     def get_grade(self):
         safe_name = self.file_path.name
@@ -77,18 +103,25 @@ class FileParse:
             step = '下'
         else:
             step = ''
-        res = None
-        index = 9999
+
         for grade, grade_type in self.grade_map:
             if grade in self.file_path.name:
-                self.grade_key_word = grade
                 item_index = self.file_path.name.index(grade)
-                if item_index <= index:
-                    index = item_index
-                    res = (grade_type, grade, step)
-        if res:
-            return res
-        raise Exception('年级解析失败')
+                self.match_key_word_list.append(((grade_type, grade, step), item_index))
+
+        if self.match_key_word_list:
+            self.match_key_word_list.sort(key=lambda x: x[1])
+            final = []
+            for item in self.match_key_word_list:
+                if '五四制' in self.file_path.name or '五四学制' in self.file_path.name:
+                    if item[0][0] == '小学':
+                        item[0][0] = '初中'
+                final.append(item[0])
+            self.match_key_word_list = final
+        else:
+            # if res:
+            #     return res
+            raise Exception('年级解析失败')
 
     def get_subject(self):
         res = None
@@ -101,8 +134,9 @@ class FileParse:
                     index = item_index
                     res = (subject_type, subject)
         if res:
-            return res
-        raise Exception('学科解析失败')
+            self.subject_type, self.subject = res
+        else:
+            raise Exception('学科解析失败')
 
     def get_class(self):
         res = None
@@ -115,8 +149,9 @@ class FileParse:
                     index = item_index
                     res = (class_info['class_type'], class_info['child'])
         if res:
-            return res
-        raise Exception('资料栏目解析失败')
+            self.class_type, self.class_child = res
+        else:
+            raise Exception('资料栏目解析失败')
 
 
 class AutoBrowserUpload:
@@ -213,7 +248,7 @@ class AutoBrowserUpload:
             success_tips = self.page.locator(
                 f'.file-info:has(input[value="{file_path.name}"]) .success-tips')
             try:
-                success_tips.wait_for(timeout=180 * 1000) # 毫秒
+                success_tips.wait_for(timeout=180 * 1000)  # 毫秒
             except Exception as e:
                 raise e
 
@@ -231,13 +266,12 @@ class AutoBrowserUpload:
             except:
                 pass
         # 获取学段和学科
-        grade_type, grade, step = file_parse.grade_type, file_parse.grade, file_parse.step
         subject_type, subject = file_parse.subject_type, file_parse.subject
         self.page.locator(".xdxk_select").click()
         sleep(WAIT_TIME)
-        self.page.locator("#xd").get_by_text(grade_type, exact=True).hover()
+        self.page.locator("#xd").get_by_text(file_parse.grade_type, exact=True).hover()
         sleep(1)
-        self.page.locator("#xd").get_by_text(grade_type, exact=True).click()
+        self.page.locator("#xd").get_by_text(file_parse.grade_type, exact=True).click()
         sleep(1)
         self.page.locator("#chid").get_by_text(subject_type, exact=True).click()
         sleep(WAIT_TIME)
@@ -248,7 +282,7 @@ class AutoBrowserUpload:
         sleep(WAIT_TIME)
         # 特殊处理 中考专区/高考专区
         if class_type == '中考专区/高考专区':
-            if grade_type == '高中':
+            if file_parse.grade_type == '高中':
                 self.page.locator('.t2hd').get_by_text('高考专区', exact=True).click()
             else:
                 self.page.locator('.t2hd').get_by_text('中考专区', exact=True).click()
@@ -258,22 +292,39 @@ class AutoBrowserUpload:
         # 特殊处理地理
         if subject_type == '地理' and class_child == '模拟试题':
             class_child = '模拟试卷'
-        # 特殊处理 与试卷题目中的年级一致，注意分上下册（试卷题目有上、下之分）
-        if class_child == '与试卷题目中的年级一致，注意分上下册（试卷题目有上、下之分）':
-            # if grade == '高三':
-            #     # 高三不填上下
-            #     self.page.locator('.t2end', has_text=grade).click()
-            # else:
-            self.page.locator('.t2end', has_text=grade + step).first.click()
-        elif class_child == '与试卷题目中的年级一致':
-            self.page.locator('.t2end', has_text=grade).click()
-        else:
-            self.page.locator('.t2end', has_text=class_child).click()
-        sleep(WAIT_TIME)
-        self.page.locator('.ui-dialog-grid').get_by_role('button', name='确定').click()
-        self.page.locator('#versionid').select_option('110')
-        sleep(WAIT_TIME)
-        self.page.locator('.anonymous_name').click()
+
+        for i in range(len(file_parse.match_key_word_list)):
+            file_parse.try_index = i
+            print(f'尝试匹配 [{file_parse.grade}]')
+            try:
+                # 特殊处理 与试卷题目中的年级一致，注意分上下册（试卷题目有上、下之分）
+                if class_child == '与试卷题目中的年级一致，注意分上下册（试卷题目有上、下之分）':
+                    if file_parse.step:
+                        try:
+                            self.page.locator('.t2end', has_text=file_parse.grade + file_parse.step).first.click(timeout=5000)
+                        except:
+                            self.page.locator('.t2end', has_text=file_parse.grade).first.click(timeout=5000)
+                    else:
+                        self.page.locator('.t2end', has_text=file_parse.grade).first.click(timeout=5000)
+
+                elif class_child == '与试卷题目中的年级一致':
+                    self.page.locator('.t2end', has_text=file_parse.grade).click()
+                else:
+                    self.page.locator('.t2end', has_text=class_child).click()
+
+                sleep(WAIT_TIME)
+                self.page.locator('.ui-dialog-grid').get_by_role('button', name='确定').click()
+                self.page.locator('#versionid').select_option('110')
+                sleep(WAIT_TIME)
+                self.page.locator('.anonymous_name').click()
+                return
+            except:
+                print('年级选择失败')
+                sleep(WAIT_TIME)
+        raise Exception('年级数据错误')
+
+
+
 
     def confirm(self):
         self.page.get_by_text('确定上传', exact=True).click()
@@ -405,43 +456,44 @@ def run():
     print('登录成功')
     print('任务开始')
     n = 0
-    for file_path in for_upload_files():
-        n += 1
-        try:
-            print('-------------')
-            print(f"{n}.[开始上传] {file_path.name}")
-            upload_loger.check(file_path)
-            # 上传文件
-            file_parse = FileParse(file_path, grade_map, subject_map, class_map)
-            print(
-                f'  [匹配到关键词] 年级:{file_parse.grade_key_word}｜学期:{file_parse.step}|学科:{file_parse.subject_key_word}|类型:{file_parse.class_key_word}')
-            browser.page.goto('https://www.21cnjy.com/webupload/')
-            browser.upload(file_path)
-            browser.fill_info(file_parse, file_path)
-            browser.confirm()
-            browser.check_result()
-            upload_loger.log(file_path)
-            # 移动到成功文件夹
-            move_to_dir(file_path, SUCCESS_DIR)
-            print('  [上传成功]')
-        except TargetClosedError as e:
-            print(f'  [上传失败] 详细信息:\n   浏览器被关闭, 停止本次上传 {e}')
-            break
-        except SpacialFileError as e:
-            print(f'  [上传失败] 详细信息:\n   {e}')
-            # 移动到精品文件夹
-            move_to_dir(file_path, SPACIAL_DIR)
-        except AlreadyUploadError as e:
-            print(f'  [上传失败] 详细信息:\n   {e}')
-            # 移动到失败文件夹
-            move_to_dir(file_path, REPEAT_DIR)
+    while True:
+        for file_path in for_upload_files():
+            n += 1
+            try:
+                print('-------------')
+                print(f"{n}.[开始上传] {file_path.name}")
+                upload_loger.check(file_path)
+                # 上传文件
+                file_parse = FileParse(file_path, grade_map, subject_map, class_map)
 
-        except Exception as e:
-            print(f'  [上传失败] 详细信息:\n   {e}')
-            # 移动到失败文件夹
-            move_to_dir(file_path, FAILED_DIR)
-    input('上传完成, 回车退出并关闭浏览器')
-    browser.close_browser()
+                print(
+                    f'  [匹配到关键词 {len(file_parse.match_key_word_list)}] 年级:{file_parse.grade_key_word}｜学期:{file_parse.step}|学科:{file_parse.subject_key_word}|类型:{file_parse.class_key_word}')
+                browser.page.goto('https://www.21cnjy.com/webupload/')
+                browser.upload(file_path)
+                browser.fill_info(file_parse, file_path)
+                browser.confirm()
+                browser.check_result()
+                upload_loger.log(file_path)
+                # 移动到成功文件夹
+                move_to_dir(file_path, SUCCESS_DIR)
+                print('  [上传成功]')
+            except TargetClosedError as e:
+                print(f'  [上传失败] 详细信息:\n   浏览器被关闭, 停止本次上传 {e}')
+                break
+            except SpacialFileError as e:
+                print(f'  [上传失败] 详细信息:\n   {e}')
+                # 移动到精品文件夹
+                move_to_dir(file_path, SPACIAL_DIR)
+            except AlreadyUploadError as e:
+                print(f'  [上传失败] 详细信息:\n   {e}')
+                # 移动到失败文件夹
+                move_to_dir(file_path, REPEAT_DIR)
+            except Exception as e:
+                print(f'  [上传失败] 详细信息:\n   {e}')
+                # 移动到失败文件夹
+                move_to_dir(file_path, FAILED_DIR)
+        time.sleep(1)
+    # browser.close_browser()
 
 
 if __name__ == '__main__':
