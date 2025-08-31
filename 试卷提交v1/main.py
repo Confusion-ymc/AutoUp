@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import time
+import traceback
 import zipfile
 from pathlib import Path
 from time import sleep
@@ -67,12 +68,14 @@ class FileParse:
         self.file_path = file_path
         self.subject_type, self.subject = None, None
         self.class_type, self.class_child = None, None
-        self.parse()
 
     def parse(self):
-        self.get_subject()
-        self.get_class()
-        self.get_grade()
+        try:
+            self.get_subject()
+            self.get_class()
+            self.get_grade()
+        except Exception as e:
+            raise Exception(f'文件解析失败：{traceback.format_exc()}')
 
     @property
     def grade_key_word(self):
@@ -103,36 +106,30 @@ class FileParse:
             step = '下'
         else:
             step = ''
-
+        temp = []
         for grade, grade_type in self.grade_map:
             if grade in self.file_path.name:
                 item_index = self.file_path.name.index(grade)
-                self.match_key_word_list.append(((grade_type, grade, step), item_index))
+                temp.append(([grade_type, grade, step], item_index))
 
-        if self.match_key_word_list:
-            self.match_key_word_list.sort(key=lambda x: x[1])
+        if temp:
+            temp.sort(key=lambda x: x[1])
             final = []
-            for item in self.match_key_word_list:
+            for item in temp:
                 if '五四制' in self.file_path.name or '五四学制' in self.file_path.name:
                     if item[0][0] == '小学':
                         item[0][0] = '初中'
                 final.append(item[0])
             self.match_key_word_list = final
         else:
-            # if res:
-            #     return res
             raise Exception('年级解析失败')
 
     def get_subject(self):
         res = None
-        index = 9999
         for subject, subject_type in self.subject_map:
             if subject in self.file_path.name:
                 self.subject_key_word = subject
-                item_index = self.file_path.name.index(subject)
-                if item_index <= index:
-                    index = item_index
-                    res = (subject_type, subject)
+                res = (subject_type, subject)
         if res:
             self.subject_type, self.subject = res
         else:
@@ -319,7 +316,6 @@ class AutoBrowserUpload:
                 self.page.locator('.anonymous_name').click()
                 return
             except:
-                print('年级选择失败')
                 sleep(WAIT_TIME)
         raise Exception('年级数据错误')
 
@@ -465,6 +461,7 @@ def run():
                 upload_loger.check(file_path)
                 # 上传文件
                 file_parse = FileParse(file_path, grade_map, subject_map, class_map)
+                file_parse.parse()
 
                 print(
                     f'  [匹配到关键词 {len(file_parse.match_key_word_list)}] 年级:{file_parse.grade_key_word}｜学期:{file_parse.step}|学科:{file_parse.subject_key_word}|类型:{file_parse.class_key_word}')
