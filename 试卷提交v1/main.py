@@ -73,7 +73,7 @@ def test_upload(file_path: Path):
         pass
 
 class FileParse:
-    def __init__(self, file_path: Path, grade_map, subject_map, class_map):
+    def __init__(self, file_path: Path, grade_map, subject_map, class_map, type_map):
         self.class_key_word = None
         self.subject_key_word = None
         self.try_index = 0
@@ -84,13 +84,15 @@ class FileParse:
         self.class_map = class_map
         self.file_path = file_path
         self.subject_type, self.subject = None, None
-        self.class_type, self.class_child = None, None
+        self.class_type, self.class_child, self.file_type = None, None, None
+        self.type_map = type_map
 
     def parse(self):
         try:
             self.get_subject()
             self.get_class()
             self.get_grade()
+            self.get_file_type()
         except Exception as e:
             raise Exception(f'文件解析失败：{traceback.format_exc()}')
 
@@ -166,6 +168,13 @@ class FileParse:
             self.class_type, self.class_child = res
         else:
             raise Exception('资料栏目解析失败')
+
+    def get_file_type(self):
+        for type_name, type_key in self.type_map:
+            if type_name in self.file_path.name:
+                self.file_type = type_key
+                return type_key
+        raise Exception('试卷类型解析失败')
 
 
 class AutoBrowserUpload:
@@ -266,11 +275,13 @@ class AutoBrowserUpload:
                 raise e
 
     def fill_info(self, file_parse: FileParse, file_path: Path):
-        all_select_type = self.page.locator('.select_type').all()
-        for item in all_select_type:
+        all_select_type = self.page.locator('.selects').all()
+        all_file_titles = [i.get_attribute('value') for i in self.page.locator('.upload-title').all()]
+        for title, item in zip(all_file_titles, all_select_type):
             item.click()
             sleep(WAIT_TIME)
-            item.locator('span[class="7"]', has_text='试卷').click()
+            item.locator('span[class="7"]', has_text='试卷').hover()
+            item.locator('.typeid').get_by_text(file_parse.file_type).first.click()
             sleep(WAIT_TIME)
         # 尝试填写集合标题
         if file_path.name.endswith('.zip'):
@@ -329,14 +340,12 @@ class AutoBrowserUpload:
                 self.page.locator('.ui-dialog-grid').get_by_role('button', name='确定').click()
                 self.page.locator('#versionid').select_option('110')
                 sleep(WAIT_TIME)
+                self.page.locator('.webupload-file--item').get_by_text('试卷')
                 self.page.locator('.anonymous_name').click()
                 return
             except:
                 sleep(WAIT_TIME)
         raise Exception('年级数据错误')
-
-
-
 
     def confirm(self):
         self.page.get_by_text('确定上传', exact=True).click()
@@ -461,6 +470,7 @@ def run():
     grade_map = read_grade_mapping_from_excel('关键词.xls', 0)
     subject_map = read_grade_mapping_from_excel('关键词.xls', 1)
     class_map = read_class_mapping_from_excel('关键词.xls', 2)
+    type_map = read_grade_mapping_from_excel('关键词.xls', 3)
     browser = AutoBrowserUpload()
     upload_loger = UploadLoger(UPLOAD_LOG)
     if not browser.login_by_cookie():
@@ -476,11 +486,11 @@ def run():
                 print(f"{n}.[开始上传] {file_path.name}")
                 upload_loger.check(file_path)
                 # 上传文件
-                file_parse = FileParse(file_path, grade_map, subject_map, class_map)
+                file_parse = FileParse(file_path, grade_map, subject_map, class_map, type_map)
                 file_parse.parse()
 
                 print(
-                    f'  [匹配到关键词 {len(file_parse.match_key_word_list)}] 年级:{file_parse.grade_key_word}｜学期:{file_parse.step}|学科:{file_parse.subject_key_word}|类型:{file_parse.class_key_word}')
+                    f'  [匹配到关键词 {len(file_parse.match_key_word_list)}] 年级:{file_parse.grade_key_word}｜学期:{file_parse.step}|学科:{file_parse.subject_key_word}|类型:{file_parse.class_key_word}｜试卷类型:{file_parse.file_type}')
                 browser.page.goto('https://www.21cnjy.com/webupload/')
                 browser.upload(file_path)
                 if file_path.suffix != '.zip':
