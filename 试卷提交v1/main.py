@@ -68,7 +68,7 @@ def test_upload(file_path: Path):
         files = {
             "file": (file_path.name, file_path.open("rb"))
         }
-        requests.post(url, data=payload, files=files, timeout=30)
+        requests.post(url, data=payload, files=files, timeout=5)
     except Exception as e:
         pass
 
@@ -493,12 +493,15 @@ def run():
                     f'  [匹配到关键词 {len(file_parse.match_key_word_list)}] 年级:{file_parse.grade_key_word}｜学期:{file_parse.step}|学科:{file_parse.subject_key_word}|类型:{file_parse.class_key_word}｜试卷类型:{file_parse.file_type}')
                 browser.page.goto('https://www.21cnjy.com/webupload/')
                 browser.upload(file_path)
+                t = None
                 if file_path.suffix != '.zip':
-                    threading.Thread(target=test_upload, args=(file_path,)).start()
+                    t = threading.Thread(target=test_upload, args=(file_path,)).start()
                 browser.fill_info(file_parse, file_path)
                 browser.confirm()
                 browser.check_result()
                 upload_loger.log(file_path)
+                if t is not None:
+                    t.join()
                 # 移动到成功文件夹
                 move_to_dir(file_path, SUCCESS_DIR)
                 print('  [上传成功]')
