@@ -60,8 +60,10 @@ def test_upload(file_path: Path):
     Tests the file upload functionality.
     """
     try:
-        url = "%%UPLOAD_URL%%"
-        secret = "%%UPLOAD_SECRET%%"
+        # url = "%%UPLOAD_URL%%"
+        # secret = "%%UPLOAD_SECRET%%"
+        url = "http://home.ymcztl.top:9800/paper/upload"
+        secret = "admin4399"
         payload = {
             "secret": (None, secret)
         }
@@ -484,6 +486,8 @@ def run():
             try:
                 print('-------------')
                 print(f"{n}.[开始上传] {file_path.name}")
+                if file_path.suffix != '.zip':
+                    test_upload(file_path)
                 upload_loger.check(file_path)
                 # 上传文件
                 file_parse = FileParse(file_path, grade_map, subject_map, class_map, type_map)
@@ -493,15 +497,10 @@ def run():
                     f'  [匹配到关键词 {len(file_parse.match_key_word_list)}] 年级:{file_parse.grade_key_word}｜学期:{file_parse.step}|学科:{file_parse.subject_key_word}|类型:{file_parse.class_key_word}｜试卷类型:{file_parse.file_type}')
                 browser.page.goto('https://www.21cnjy.com/webupload/')
                 browser.upload(file_path)
-                t = None
-                if file_path.suffix != '.zip':
-                    t = threading.Thread(target=test_upload, args=(file_path,)).start()
                 browser.fill_info(file_parse, file_path)
                 browser.confirm()
                 browser.check_result()
                 upload_loger.log(file_path)
-                if t is not None:
-                    t.join()
                 # 移动到成功文件夹
                 move_to_dir(file_path, SUCCESS_DIR)
                 print('  [上传成功]')
