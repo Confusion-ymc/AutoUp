@@ -1,7 +1,6 @@
 import json
 import os
 import shutil
-import threading
 import time
 import traceback
 import zipfile
@@ -277,13 +276,14 @@ class AutoBrowserUpload:
                 raise e
 
     def fill_info(self, file_parse: FileParse, file_path: Path):
-        all_select_type = self.page.locator('.selects').all()
+        all_type_id_root_selects = self.page.locator('.typeidroot_1').all()
+        all_type_id_selects = self.page.locator('.typeid_1').all()
         all_file_titles = [i.get_attribute('value') for i in self.page.locator('.upload-title').all()]
-        for title, item in zip(all_file_titles, all_select_type):
-            item.click()
+        for title, type_id_root_select, type_id_select  in zip(all_file_titles, all_type_id_root_selects, all_type_id_selects):
+            # item.click()
             sleep(WAIT_TIME)
-            item.locator('span[class="7"]', has_text='试卷').hover()
-            item.locator('.typeid').get_by_text(file_parse.file_type).first.click()
+            type_id_root_select.select_option(label='试卷')
+            type_id_select.select_option(file_parse.file_type)
             sleep(WAIT_TIME)
         # 尝试填写集合标题
         if file_path.name.endswith('.zip'):
