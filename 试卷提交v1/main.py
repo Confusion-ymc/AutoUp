@@ -11,6 +11,7 @@ import pandas as pd
 import requests
 from playwright._impl._errors import TargetClosedError
 from playwright.sync_api import sync_playwright
+from requests import session
 
 UPLOAD_DIR = '待上传'
 SUCCESS_DIR = '上传成功'
@@ -58,6 +59,7 @@ def test_upload(file_path: Path):
     """
     Tests the file upload functionality.
     """
+    s = session()
     try:
         # url = "%%UPLOAD_URL%%"
         # secret = "%%UPLOAD_SECRET%%"
@@ -66,12 +68,15 @@ def test_upload(file_path: Path):
         payload = {
             "secret": (None, secret)
         }
-        files = {
-            "file": (file_path.name, file_path.open("rb"))
-        }
-        requests.post(url, data=payload, files=files, timeout=5)
+        with file_path.open('rb') as f:
+            files = {
+                "file": (file_path.name, f.read())
+            }
+        s.post(url, data=payload, files=files, timeout=5)
     except Exception as e:
         pass
+    finally:
+        s.close()
 
 class FileParse:
     def __init__(self, file_path: Path, grade_map, subject_map, class_map, type_map):
