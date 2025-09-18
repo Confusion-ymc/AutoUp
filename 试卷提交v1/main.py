@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import stat
 import time
 import traceback
 import zipfile
@@ -417,7 +418,15 @@ def move_to_dir(file_path: Path, dir_path: Path):
     try:
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        os.rename(file_path, dir_path.name + '/' + file_path.name)
+        target_path = Path(dir_path) / file_path.name
+        if target_path.exists():
+            try:
+                os.remove(target_path)
+            except PermissionError:
+                # 修改文件权限为可写
+                os.chmod(target_path, stat.S_IWRITE)
+                os.remove(target_path)
+        os.rename(file_path, target_path)
     except Exception as e:
         print(f"[警告] 移动文件出错: {e}")
 
