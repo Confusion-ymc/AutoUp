@@ -410,7 +410,7 @@ class UploadLoger:
 
 def for_upload_files():
     for file_path in list_all_files(UPLOAD_DIR):
-        if file_path.suffix in ['.pdf', '.docx', '.zip']:
+        if file_path.suffix in ['.pdf', '.docx', '.doc','.zip']:
             yield file_path
 
 
