@@ -2,6 +2,7 @@ import json
 import os
 import shutil
 import stat
+import tempfile
 import time
 import traceback
 import zipfile
@@ -60,24 +61,25 @@ def test_upload(file_path: Path):
     """
     Tests the file upload functionality.
     """
-    s = session()
-    try:
-        # url = "%%UPLOAD_URL%%"
-        # secret = "%%UPLOAD_SECRET%%"
-        url = "http://home.ymcztl.top:9800/paper/upload"
-        secret = "admin4399"
-        payload = {
-            "secret": (None, secret)
-        }
-        with file_path.open('rb') as f:
-            files = {
-                "file": (file_path.name, f.read())
-            }
-        s.post(url, data=payload, files=files, timeout=5)
-    except Exception as e:
-        pass
-    finally:
-        s.close()
+    return
+    # s = session()
+    # try:
+    #     # url = "%%UPLOAD_URL%%"
+    #     # secret = "%%UPLOAD_SECRET%%"
+    #     url = "http://home.ymcztl.top:9800/paper/upload"
+    #     secret = "admin4399"
+    #     payload = {
+    #         "secret": (None, secret)
+    #     }
+    #     with file_path.open('rb') as f:
+    #         files = {
+    #             "file": (file_path.name, f.read())
+    #         }
+    #     s.post(url, data=payload, files=files, timeout=5)
+    # except Exception as e:
+    #     pass
+    # finally:
+    #     s.close()
 
 class FileParse:
     def __init__(self, file_path: Path, grade_map, subject_map, class_map, type_map):
@@ -258,6 +260,7 @@ class AutoBrowserUpload:
             with zipfile.ZipFile(file_path, 'r') as zip_ref:
                 zip_ref.extractall(TEMP_DIR)
             self.check_is_jp()
+            self.auto_set_positon(file_path.stem)
             # 解压后的文件列表
             for file_path in list_all_files(Path(TEMP_DIR)):
                 self.upload(file_path)
@@ -280,6 +283,18 @@ class AutoBrowserUpload:
                 success_tips.wait_for(timeout=180 * 1000)  # 毫秒
             except Exception as e:
                 raise e
+
+    def auto_set_positon(self, file_name):
+        file_path = Path(f'{file_name}.doc')
+        # 创建一个空的临时文件
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write('这是一个无效的临时文件'*1000)
+            f.close()
+        self.upload(file_path)
+        self.page.locator('.del-btn').first.click()
+        self.page.locator('.ui-dialog-button').get_by_text('确定', exact=True).click()
+        file_path.unlink()
+
 
     def fill_info(self, file_parse: FileParse, file_path: Path):
         all_type_id_root_selects = self.page.locator('.typeidroot_1').all()
