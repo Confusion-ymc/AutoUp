@@ -56,6 +56,12 @@ class TaskManager:
         self.UPLOAD_DIR = dir_path
         self.is_changed_listen_dir = True
 
+    def change_failed_dir(self, dir_path: Path):
+        self.FAILED_DIR = dir_path
+
+    def change_repeat_dir(self, dir_path: Path):
+        self.REPEAT_DIR = dir_path
+
     def update_task_info(self, task_id: str, **kwargs):
         if task_id in self.TASK_DICT:
             self.TASK_DICT[task_id].update(kwargs)

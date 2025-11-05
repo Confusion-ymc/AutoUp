@@ -12,7 +12,7 @@ import warnings
 from browser import Browser
 from exception import MyRepeatError
 from task_manager import task_manager
-from ui2 import main_gui
+from ui import main_gui
 from utils import Tools, FileParse
 
 warnings.filterwarnings("ignore", category=UserWarning, module='openpyxl')
@@ -194,6 +194,8 @@ class AutoBrowserUpload:
                     raise MyRepeatError(f'部分重复! {tips_message}')
                 task_manager.logger.log(f'[{self.thread_name}] [上传成功] {file_path.name}')
                 return True
+            elif '重复' in tips_message:
+                raise MyRepeatError(f'部分重复! {tips_message}')
             else:
                 raise Exception(tips_message)
         raise Exception('等待超时')
