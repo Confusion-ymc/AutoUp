@@ -219,6 +219,9 @@ def main_gui(run_func):
                 window['开始'].update(disabled=True)
                 window['-THREAD_COUNT-'].update(disabled=True)
                 window['-CHANGE_LISTEN_DIR-'].update(disabled=True)
+                window['-CHANGE_FAILED_DIR-'].update(disabled=True)
+                window['-CHANGE_REPEAT_DIR-'].update(disabled=True)
+
                 window['-SHOW_BROWSER-'].update(disabled=True)
                 print(f'任务开始，线程数量：{task_manager.THREAD_COUNT}')
         window.close()

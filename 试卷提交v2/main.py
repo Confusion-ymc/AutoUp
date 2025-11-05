@@ -51,7 +51,13 @@ class AutoBrowserUpload:
         self.task_queue = task_manager.task_queue
 
     def open_page(self):
-        self.page.goto(self.target_url)
+        for i in range(3):
+            try:
+                self.page.goto(self.target_url)
+                break
+            except Exception as e:
+                task_manager.logger.log(f"[警告] 访问 {self.target_url} 加载超时，正在重试... {e}")
+                time.sleep(1)
 
     def start(self):
         def _start(self):

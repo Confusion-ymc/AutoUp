@@ -61,9 +61,9 @@ class Tools:
     @staticmethod
     def move_to_dir(file_path: Path, dir_path: Path):
         try:
-            if not os.path.exists(dir_path):
-                os.makedirs(dir_path)
-            os.rename(file_path, dir_path.name + '/' + file_path.name)
+            if not dir_path.is_dir():
+                dir_path.mkdir(parents=True, exist_ok=True)
+            shutil.move(file_path, dir_path / file_path.name)
         except Exception as e:
             print(f"[警告] 移动文件出错 [{file_path} => {dir_path}] {e}")
 
