@@ -1,6 +1,7 @@
 import os
 import queue
 import shutil
+import sys
 import threading
 import zipfile
 from pathlib import Path
@@ -120,6 +121,20 @@ class Tools:
 
     @staticmethod
     def compress_media(file_path: Path):
+        # 获取当前 exe 所在的目录
+        if getattr(sys, 'frozen', False):
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # 拼接路径
+        ffmpeg_path = os.path.join(base_dir, "ffmpeg.exe")
+        ffprobe_path = os.path.join(base_dir, "ffprobe.exe")
+
+        # 如果文件存在，则强制指定路径；否则 pydub 会尝试去系统环境变量找
+        if os.path.exists(ffmpeg_path):
+            AudioSegment.converter = ffmpeg_path
+            AudioSegment.ffprobe = ffprobe_path
         to_dir = file_path.parent / (file_path.name + '.compress')
         audio = AudioSegment.from_file(file_path)
         audio.export(to_dir, format="mp3", bitrate="8k")
