@@ -6,6 +6,8 @@ import zipfile
 from pathlib import Path
 
 import pandas as pd
+from macholib.ptypes import sizeof
+from pydub import AudioSegment
 
 INCLUDE_FILES = ['.doc', '.docx', '.pdf', '.mp3', '.zip']
 
@@ -117,6 +119,15 @@ class Tools:
             print(f"读取Excel文件出错: {e}")
             raise e
 
+    @staticmethod
+    def compress_media(file_path: Path):
+        to_dir = file_path.parent / (file_path.name + '.compress')
+        audio = AudioSegment.from_file(file_path)
+        audio.export(to_dir, format="mp3", bitrate="8k")
+        file_path.unlink()
+        to_dir.rename(file_path)
+        return to_dir
+
 
 class FileParse:
     def __init__(self, file_path: Path, grade_map, class_map, catalog_map):
@@ -146,3 +157,7 @@ class FileParse:
                 return catalog
         print('[警告] 目录解析失败，使用默认目录 "月考试题"')
         return '月考试题'
+
+
+if __name__ == '__main__':
+    print(Path('/Users/yangmingcheng/Developer/confusion/AutoUp/试卷提交v2/temp/2025年高三上期中四校联考.音频.mp3').stat().st_size/1024/1024)

@@ -155,11 +155,21 @@ class AutoBrowserUpload:
                         self.page.locator('.upload-after').locator('input[type=text]').all()[index - 1].fill(
                             data_path.stem)
                         # 上传听力
+                        original_file_size = media_files[0].stat().st_size/1024/1024
+                        if media_files[0].suffix == '.mp3' and original_file_size >= 7:
+                            # 压缩听力文件
+                            Tools.compress_media(media_files[0])
+                        compress_file_size = media_files[0].stat().st_size/1024/1024
+                        if media_files[0].stat().st_size/1024/1024 >= 7:
+                            raise Exception(f'音频文件过大, 原始：{original_file_size}M, 压缩后:{compress_file_size}M')
+
                         self.browser.upload_file(self.page,
                                                  self.page.locator('.upload-after').get_by_text('添加音频',
                                                                                                 exact=True).all()[
                                                      index - 1],
                                                  media_files[0])
+
+
                 # 标题合集
                 self.page.get_by_placeholder('请输入标题', exact=True).fill(data_path.stem)
             elif len(media_files) == 0:
